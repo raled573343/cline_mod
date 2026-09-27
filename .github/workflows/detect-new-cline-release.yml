@@ -88,10 +88,24 @@ jobs:
           set -euo pipefail
           mkdir -p .work/extract
           unzip -o -q .work/*.vsix -d .work/extract
-          bundle="$(find .work/extract -maxdepth 3 -name extension.js | head -n 1)"
-          test -n "$bundle" || { echo "extension.js not found in vsix"; exit 1; }
+          # Some packages ship auxiliary extension.js files (build helpers, compatibility
+          # shims). Prefer the canonical location and otherwise take the largest file, then
+          # refuse anything that cannot be the real bundle.
+          echo "candidates:"
+          find .work/extract -name extension.js -printf '%s %p\n' | sort -nr
+          if [ -f .work/extract/extension/dist/extension.js ]; then
+            bundle=".work/extract/extension/dist/extension.js"
+          else
+            bundle="$(find .work/extract -name extension.js -printf '%s %p\n' | sort -nr | head -n 1 | cut -d' ' -f2-)"
+          fi
+          test -n "$bundle" || { echo "::error::extension.js not found in vsix"; exit 1; }
+          size="$(stat -c %s "$bundle")"
+          echo "selected: $bundle ($size bytes)"
+          if [ "$size" -lt 5000000 ]; then
+            echo "::error::selected bundle is only $size bytes - that is not the extension bundle"
+            exit 1
+          fi
           cp "$bundle" .work/extension.js
-          ls -l .work/extension.js
           sha256sum .work/extension.js
 
       - name: Detect anchors
