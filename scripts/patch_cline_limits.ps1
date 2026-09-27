@@ -50,6 +50,11 @@ param(
     [string]$ExtensionRoot,
     [string]$ExpectedVersion = '4.1.21',
     [string]$BackupRoot = (Join-Path $env:USERPROFILE '.cline-limits-patch\backup'),
+
+    # Optional path to anchors/anchors.json. When omitted the script looks next to itself
+    # (..\anchors\anchors.json) and falls back to the embedded 4.1.21 table.
+    [string]$AnchorsPath,
+
     [switch]$Force
 )
 
@@ -174,9 +179,41 @@ if (-not $Force -and $version -ne $ExpectedVersion) {
     throw ("Installed version {0} differs from the verified version {1}. Inspect with -Report, re-verify the anchors, then use -Force only if you accept the risk." -f $version, $ExpectedVersion)
 }
 
+# --- anchor table -------------------------------------------------------------------
+# anchors/anchors.json (produced by tools/cline-limits-tool.mjs) wins over the embedded
+# table, so a new Cline version needs no change to this script.
+$anchorsFile = $AnchorsPath
+if (-not $anchorsFile) {
+    $candidate = Join-Path (Split-Path -Parent $PSScriptRoot) 'anchors\anchors.json'
+    if (Test-Path -LiteralPath $candidate) { $anchorsFile = $candidate }
+}
+
+$expectedBundleHash = $null
+$anchorsNote = 'embedded table'
+if ($anchorsFile -and (Test-Path -LiteralPath $anchorsFile)) {
+    $anchors = Get-Content -LiteralPath $anchorsFile -Raw | ConvertFrom-Json
+    $entry = $null
+    if ($anchors.versions) {
+        $prop = $anchors.versions.PSObject.Properties[$version]
+        if ($prop) { $entry = $prop.Value }
+    }
+    if ($entry -and $entry.edits -and @($entry.edits).Count -gt 0) {
+        $index = 0
+        $script:Edits = @($entry.edits | ForEach-Object {
+                $index += 1
+                [pscustomobject]@{ Id = $index; Area = ('anchors[{0}]' -f $index); Old = $_.old; New = $_.new }
+            })
+        $expectedBundleHash = $entry.bundleSha256Before
+        $anchorsNote = ('{0} ({1} edits, status {2})' -f (Split-Path -Leaf $anchorsFile), @($entry.edits).Count, $entry.status)
+    } else {
+        $anchorsNote = ('{0} has no entry for {1} - using embedded table' -f (Split-Path -Leaf $anchorsFile), $version)
+    }
+}
+
 $bundleFile = Get-Item -LiteralPath $bundlePath
 $beforeHash = (Get-FileHash -LiteralPath $bundlePath -Algorithm SHA256).Hash.ToLower()
 Write-Host ('  bundle    : {0} bytes  sha256 {1}' -f $bundleFile.Length, $beforeHash)
+Write-Host ('  anchors   : {0}' -f $anchorsNote)
 Write-Host ''
 
 $text = [IO.File]::ReadAllText($bundlePath)
@@ -216,6 +253,9 @@ if ($bad.Count -gt 0) {
 if ($bundleFile.IsReadOnly) {
     throw "Bundle file is read-only: $bundlePath"
 }
+if ($expectedBundleHash -and $expectedBundleHash -ne $beforeHash) {
+    Write-Warning (('Bundle hash {0} differs from the recorded pre-patch hash {1} for version {2}; the anchors may not match this exact build.' -f $beforeHash, $expectedBundleHash, $version))
+}
 
 $stamp  = Get-Date -Format 'yyyyMMdd-HHmmss'
 $backup = Join-Path $BackupRoot $stamp
@@ -246,6 +286,8 @@ $record = [pscustomobject]@{
     bundleSha256Before = $beforeHash
     bundleSha256After  = $afterHash
     nodeExe            = (Get-NodeExe)
+    anchorsFile        = $anchorsFile
+    expectedBundleHash = $expectedBundleHash
     edits              = @($script:Edits | ForEach-Object {
             [pscustomobject]@{ id = $_.Id; area = $_.Area; old = $_.Old; new = $_.New }
         })

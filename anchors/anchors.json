@@ -1,0 +1,124 @@
+{
+  "schema": "cline-mod-anchors-v1",
+  "description": "Exact string replacements per Cline version. This file is the single source of truth used by scripts/patch_cline_limits.ps1. Entries under `versions` are produced by tools/cline-limits-tool.mjs (detect) and reviewed before release.",
+  "targets": {
+    "run_commands_output": 200000,
+    "search_output": 200000,
+    "read_output_chars": 200000,
+    "read_max_lines": 20000,
+    "read_line_chars": 20000,
+    "attached_file_content": 4000000,
+    "web_fetch_content": 200000,
+    "editor_input": 100000,
+    "tool_result_forwarding": 300000,
+    "assistant_text": 400000,
+    "assistant_tool_markup": 100000,
+    "sdk_command_output": 200000,
+    "sdk_shell_tail_buffer": 500000,
+    "sdk_read_bytes": 2000000,
+    "sdk_long_line_guard": 20000,
+    "sdk_glob_results": 2000,
+    "sdk_traversal_depth": 100,
+    "sdk_traversal_budget": 200000
+  },
+  "versions": {
+    "4.1.21": {
+      "status": "AUTO",
+      "method": "detected",
+      "detectedAt": "2026-09-27T13:48:38.512Z",
+      "bundleBytesBefore": 26360724,
+      "bundleSha256Before": "0035a6327275fd3f750ae7cbabf944f2d31f6f36f53a37a808eff7b0421e2121",
+      "bundleBytesAfter": 26360764,
+      "bundleSha256After": "db84361b262e38720ca488377aaedf60ecbaaa83db03b62136f9c556e1ca3316",
+      "applyCheck": "PASS",
+      "syntaxCheck": "PASS",
+      "edits": [
+        {
+          "old": "maxChars??48e3",
+          "new": "maxChars??200000"
+        },
+        {
+          "old": "WQt=48e3",
+          "new": "WQt=200000"
+        },
+        {
+          "old": "nXo=48e3",
+          "new": "nXo=200000"
+        },
+        {
+          "old": "QQt=2e3",
+          "new": "QQt=20000"
+        },
+        {
+          "old": "jCn=2e3",
+          "new": "jCn=20000"
+        },
+        {
+          "old": ",e=409600){if(t.length<=e)return t",
+          "new": ",e=4000000){if(t.length<=e)return t"
+        },
+        {
+          "old": "slice(0,5e4)",
+          "new": "slice(0,200000)"
+        },
+        {
+          "old": "A.length>5e4&&",
+          "new": "A.length>200000&&"
+        },
+        {
+          "old": "showing first 50000 of",
+          "new": "showing first 200000 of"
+        },
+        {
+          "old": "E0e=6e3",
+          "new": "E0e=100000"
+        },
+        {
+          "old": "e5p=8e3",
+          "new": "e5p=300000"
+        },
+        {
+          "old": "t5p=5e4",
+          "new": "t5p=200000"
+        },
+        {
+          "old": "n5p=2e5",
+          "new": "n5p=400000"
+        },
+        {
+          "old": "i5p=12e3",
+          "new": "i5p=100000"
+        },
+        {
+          "old": "Suo=102400",
+          "new": "Suo=500000"
+        },
+        {
+          "old": "Wad=262144",
+          "new": "Wad=2000000"
+        },
+        {
+          "old": "OKe=102400",
+          "new": "OKe=200000"
+        },
+        {
+          "old": "qad=2e3",
+          "new": "qad=20000"
+        },
+        {
+          "old": "Gad=200",
+          "new": "Gad=2000"
+        },
+        {
+          "old": "Had=40",
+          "new": "Had=100"
+        },
+        {
+          "old": "zad=5e4",
+          "new": "zad=200000"
+        }
+      ]
+    }
+  },
+  "updatedAt": "2026-09-27T13:48:38.512Z"
+}

@@ -32,14 +32,19 @@ This repository changes the limits directly in the installed extension bundle:
 **numeric constants only, one exact-match anchor per change, automatic backup,
 one-command revert.**
 
-## Supported version
+## Supported versions
+
+The generated support matrix lives in [docs/supported-versions.md](docs/supported-versions.md);
+new Cline releases are picked up automatically (see [docs/automation.md](docs/automation.md)).
 
 | Cline version | Bundle SHA-256 (before patch) | Status |
 |---|---|---|
-| `4.1.21` | `0035a6327275fd3f750ae7cbabf944f2d31f6f36f53a37a808eff7b0421e2121` | **verified** — all 12 anchors match exactly once |
+| `4.1.21` | `0035a6327275fd3f750ae7cbabf944f2d31f6f36f53a37a808eff7b0421e2121` | **AUTO** — 15/15 locator rules, 21 edits, `node --check` PASS |
 
-Other versions: run `-Report` first. The script refuses to touch any anchor that is not
-found exactly once, so a different build fails closed instead of corrupting the bundle.
+The patcher takes its edit table from [`anchors/anchors.json`](anchors/anchors.json) for the
+installed version (falling back to a built-in 4.1.21 table). It refuses to touch any anchor
+that is not found exactly once, so an unexpected build fails closed instead of corrupting the
+bundle.
 
 ## What changes
 
@@ -59,6 +64,16 @@ found exactly once, so a different build fails closed instead of corrupting the 
 
 Full evidence, exact anchor strings and the byte-context used to locate each constant:
 [docs/limits-map.md](docs/limits-map.md).
+
+## Automatic updates
+
+[`.github/workflows/detect-new-cline-release.yml`](.github/workflows/detect-new-cline-release.yml)
+runs daily at 05:17 UTC (and on demand): it finds the newest Cline release, downloads the VSIX,
+extracts `dist/extension.js`, re-derives every anchor edit with
+[`tools/cline-limits-tool.mjs`](tools/cline-limits-tool.mjs), verifies them (`old` must be unique,
+patched bundle must pass `node --check`) and publishes the updated patch. A fully mapped version
+becomes the **latest** release; a partially mapped one is published as a prerelease and an issue
+is opened with the rules that need manual review. Details: [docs/automation.md](docs/automation.md).
 
 ## Usage
 
@@ -116,9 +131,16 @@ LICENSE                          MIT — applies to this repository's own script
 THIRD_PARTY_NOTICES.md           upstream licence and attribution facts
 NOTICE-UPSTREAM.md               exact provenance: version, hashes, every edit before/after
 README.md                        this file
+anchors/anchors.json             edit table per Cline version (used by the patcher)
+anchors/locators.json            stable detection recipes for each limit
+anchors/reports/<version>.json   per-rule detection report (status, reason, evidence)
 docs/limits-map.md               limit -> anchor -> before/after, with locating evidence
+docs/automation.md               how automatic version detection and releases work
+docs/supported-versions.md       generated support matrix
 scripts/patch_cline_limits.ps1   report/apply, backup, syntax validation
 scripts/revert_cline_limits.ps1  list/restore backups, optional official VSIX reinstall
+tools/cline-limits-tool.mjs      detect / verify / render-docs / notes (Node, no deps)
+.github/workflows/               validate CI + automatic upstream-release pipeline
 ```
 
 ## Русская справка (кратко)
@@ -134,4 +156,11 @@ scripts/revert_cline_limits.ps1  list/restore backups, optional official VSIX re
 Порядок: `-Report` → `-Apply` → Reload Window. Откат — `revert_cline_limits.ps1`
 или переустановка официального VSIX. Скрипты — только для Windows PowerShell.
 Проект неофициальный, с Cline не связан; исходный код Cline здесь не распространяется.
+
+**Автообновления:** workflow раз в сутки сам находит свежий релиз Cline, заново
+определяет каждый лимит (по стабильным маркерам и именам свойств, а не по
+минифицированным переменным), проверяет результат `node --check` и публикует релиз
+`patch-v<версия>`; полностью распознанная версия становится `latest`, частично
+распознанная — prerelease + issue. Таблица версий — `docs/supported-versions.md`,
+подробности — `docs/automation.md`.
 

@@ -1,0 +1,161 @@
+{
+  "schema": "cline-mod-locators-v1",
+  "notes": [
+    "Locator recipes used to re-detect every limit in a new Cline build.",
+    "They deliberately avoid minified variable names: they anchor on property names,",
+    "environment variable names, tool-description text, truncation notice text and code",
+    "shapes, all of which survive minification across releases.",
+    "",
+    "kinds:",
+    "  literal         - one capture group yields the numeric literal; the whole match is rewritten",
+    "  symbol-decl     - capture a variable name (as: symbol), then rewrite SYM=<value> at its declaration",
+    "  block-signature - locate the comma-run of assignments whose values equal `signature`,",
+    "                    then rewrite each position listed in `targets` (null = leave as is)",
+    "",
+    "steps:",
+    "  { type: 'marker',  pattern, before, after }  narrow the search to a window around one match",
+    "  { type: 'capture', pattern, valueGroup, as } capture the literal or the symbol name"
+  ],
+  "rules": [
+    {
+      "key": "run_commands_output",
+      "area": "run_commands output budget",
+      "kind": "literal",
+      "target": 200000,
+      "notes": "Shell executor head+tail budget; property name `maxChars` is stable.",
+      "steps": [{ "type": "capture", "pattern": "maxChars\\?\\?([0-9]+(?:\\.[0-9]+)?e[0-9]+|[0-9]+)", "valueGroup": 1 }]
+    },
+    {
+      "key": "search_output",
+      "area": "search_codebase output budget",
+      "kind": "symbol-decl",
+      "target": 200000,
+      "notes": "Found through the `search output truncated` notice, then through the symbol used as the cap.",
+      "steps": [
+        { "type": "marker", "pattern": "search output truncated", "before": 800, "after": 0 },
+        { "type": "capture", "pattern": "length<=([A-Za-z0-9_$]+)\\)return", "valueGroup": 1, "as": "symbol" }
+      ]
+    },
+    {
+      "key": "read_output_chars",
+      "area": "read_files output budget",
+      "kind": "symbol-decl",
+      "target": 200000,
+      "notes": "Found through the read_files tool description: `~${Math.round(SYM/1024)}k characters`.",
+      "steps": [
+        { "type": "capture", "pattern": "Math\\.round\\(([A-Za-z0-9_$]+)/1024\\)\\}k characters", "valueGroup": 1, "as": "symbol" }
+      ]
+    },
+    {
+      "key": "read_max_lines",
+      "area": "read_files max lines",
+      "kind": "symbol-decl",
+      "target": 20000,
+      "notes": "Found through the read_files tool description: `at most ${SYM} lines`.",
+      "steps": [{ "type": "capture", "pattern": "at most \\$\\{([A-Za-z0-9_$]+)\\} lines", "valueGroup": 1, "as": "symbol" }]
+    },
+    {
+      "key": "read_line_chars",
+      "area": "read_files per-line chars",
+      "kind": "symbol-decl",
+      "target": 20000,
+      "notes": "Found through the `[line truncated]` notice and the slice that produces it.",
+      "steps": [
+        { "type": "capture", "pattern": "slice\\(0,([A-Za-z0-9_$]+)\\)\\} \\[line truncated\\]", "valueGroup": 1, "as": "symbol" }
+      ]
+    },
+    {
+      "key": "attached_file_content",
+      "area": "attached file content limit",
+      "kind": "literal",
+      "target": 4000000,
+      "notes": "Default parameter of the content-limits helper; shape `(t,e=<num>){if(t.length<=e)return t`.",
+      "steps": [{ "type": "capture", "pattern": ",e=([0-9]+)\\)\\{if\\(t\\.length<=e\\)return t", "valueGroup": 1 }]
+    },
+    {
+      "key": "web_fetch_content_slice",
+      "area": "web fetch content slice",
+      "kind": "literal",
+      "target": 200000,
+      "notes": "Located inside the web-fetch function, near its notice text.",
+      "steps": [
+        { "type": "marker", "pattern": "Content truncated: showing first", "before": 400, "after": 0 },
+        { "type": "capture", "pattern": "slice\\(0,([0-9]+(?:\\.[0-9]+)?e[0-9]+|[0-9]+)\\)", "valueGroup": 1 }
+      ]
+    },
+    {
+      "key": "web_fetch_content_check",
+      "area": "web fetch length check",
+      "kind": "literal",
+      "target": 200000,
+      "notes": "The `>N&&` guard that decides whether the truncation notice is emitted.",
+      "steps": [
+        { "type": "marker", "pattern": "Content truncated: showing first", "before": 400, "after": 0 },
+        { "type": "capture", "pattern": "[A-Za-z0-9_$]\\.length>([0-9]+(?:\\.[0-9]+)?e[0-9]+|[0-9]+)&&", "valueGroup": 1 }
+      ]
+    },
+    {
+      "key": "web_fetch_notice_text",
+      "area": "web fetch notice text",
+      "kind": "literal",
+      "target": 200000,
+      "notes": "User-visible notice must always quote the enforced value.",
+      "steps": [{ "type": "capture", "pattern": "showing first ([0-9]+) of", "valueGroup": 1 }]
+    },
+    {
+      "key": "editor_input_guard",
+      "area": "editor payload guard",
+      "kind": "symbol-decl",
+      "target": 100000,
+      "notes": "Found through the 'old_text was ... limit of ${SYM}' message so only one of the two messages is matched.",
+      "steps": [{ "type": "capture", "pattern": "old_text\\.length>([A-Za-z0-9_$]+)\\?", "valueGroup": 1, "as": "symbol" }]
+    },
+    {
+      "key": "message_builder_tool_result",
+      "area": "message builder: tool-result forwarding cap",
+      "kind": "symbol-decl",
+      "target": 300000,
+      "notes": "Located through the persisted property name `maxToolResultChars` and its default fallback argument.",
+      "steps": [{ "type": "capture", "pattern": "maxToolResultChars=[A-Za-z0-9_$]+\\(e\\.maxToolResultChars,([A-Za-z0-9_$]+)\\)", "valueGroup": 1, "as": "symbol" }]
+    },
+    {
+      "key": "message_builder_file_content",
+      "area": "message builder: file content cap",
+      "kind": "symbol-decl",
+      "target": 200000,
+      "notes": "Property name `maxFileContentChars` survives minification.",
+      "steps": [{ "type": "capture", "pattern": "maxFileContentChars=[A-Za-z0-9_$]+\\(e\\.maxFileContentChars,([A-Za-z0-9_$]+)\\)", "valueGroup": 1, "as": "symbol" }]
+    },
+    {
+      "key": "message_builder_assistant_text",
+      "area": "message builder: assistant text cap",
+      "kind": "symbol-decl",
+      "target": 400000,
+      "notes": "Property name `maxAssistantTextChars` survives minification.",
+      "steps": [{ "type": "capture", "pattern": "maxAssistantTextChars=[A-Za-z0-9_$]+\\(e\\.maxAssistantTextChars,([A-Za-z0-9_$]+)\\)", "valueGroup": 1, "as": "symbol" }]
+    },
+    {
+      "key": "message_builder_tool_markup",
+      "area": "message builder: assistant tool-call markup cap",
+      "kind": "symbol-decl",
+      "target": 100000,
+      "notes": "Property name `maxAssistantToolMarkupChars` survives minification.",
+      "steps": [{ "type": "capture", "pattern": "maxAssistantToolMarkupChars=[A-Za-z0-9_$]+\\(e\\.maxAssistantToolMarkupChars,([A-Za-z0-9_$]+)\\)", "valueGroup": 1, "as": "symbol" }]
+    },
+    {
+      "key": "sdk_tool_budgets",
+      "area": "sdk tool budgets (shell tail buffer, grep budget, read bytes, line guard, glob, traversal)",
+      "kind": "block-signature",
+      "target": null,
+      "notes": [
+        "These declarations live in one comma-run whose variable names are minified and change per",
+        "build. Detection therefore matches the frozen value signature and rewrites by position.",
+        "If the defaults themselves change upstream, this rule reports REVIEW and the signature",
+        "below must be refreshed from the new build."
+      ],
+      "blockPattern": "[A-Za-z0-9_$]+=(?:[0-9]+(?:\\.[0-9]+)?e[0-9]+|[0-9]+)(?:,[A-Za-z0-9_$]+=(?:[0-9]+(?:\\.[0-9]+)?e[0-9]+|[0-9]+)){5,}",
+      "signature": [102400, 120000, 262144, 102400, 2000, 200, 40, 50000],
+      "targets": [500000, null, 2000000, 200000, 20000, 2000, 100, 200000]
+    }
+  ]
+}

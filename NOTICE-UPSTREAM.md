@@ -14,7 +14,7 @@ ever redistributed.
 | Patched file | `dist/extension.js` (single minified CommonJS bundle) |
 | Size before patch | `26 360 724` bytes |
 | SHA-256 before patch | `0035a6327275fd3f750ae7cbabf944f2d31f6f36f53a37a808eff7b0421e2121` |
-| SHA-256 after patch (4.1.21 reference run) | `d27e72141dab37b1241509018d14a3283cc3aab53c10290c7457dbe4f443edf9` — also recorded in `patch-manifest.json` next to each backup |
+| SHA-256 after patch (4.1.21, canonical anchors) | `db84361b262e38720ca488377aaedf60ecbaaa83db03b62136f9c556e1ca3316` — also recorded in `patch-manifest.json` next to each backup |
 
 ## 2. Upstream release provenance
 
@@ -45,7 +45,17 @@ numbers, not creative expression, and are not redistributed here as a work.
    validated with `node --check` **before** the installed bundle is replaced, so a validation
    failure leaves the live extension untouched.
 
-## 4. Exact edits (before → after)
+## 4. Exact edits
+
+The authoritative list is [`anchors/anchors.json`](anchors/anchors.json): **21 edits** for 4.1.21,
+generated and verified by [`tools/cline-limits-tool.mjs`](tools/cline-limits-tool.mjs) — 15/15
+locator rules resolved, uniqueness check passed, `node --check` passed. Targets are written as
+decimal literals, which is semantically identical to the exponential spellings used by the first
+manual run.
+
+The table below is the historical manual record of the same limits (first run, exponential
+literals). It is kept for review and explains *which* limits are touched; it is not the applied
+source of truth.
 
 | # | Area | Anchor before | Anchor after |
 |---|---|---|---|

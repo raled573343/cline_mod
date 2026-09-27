@@ -1,0 +1,236 @@
+{
+  "version": "4.1.21",
+  "detectedAt": "2026-09-27T13:48:38.512Z",
+  "status": "AUTO",
+  "ruleCount": 15,
+  "autoCount": 15,
+  "bundleBytesBefore": 26360724,
+  "bundleSha256Before": "0035a6327275fd3f750ae7cbabf944f2d31f6f36f53a37a808eff7b0421e2121",
+  "bundleBytesAfter": 26360764,
+  "bundleSha256After": "db84361b262e38720ca488377aaedf60ecbaaa83db03b62136f9c556e1ca3316",
+  "applyCheck": "PASS",
+  "syntaxCheck": "PASS",
+  "rules": [
+    {
+      "key": "run_commands_output",
+      "area": "run_commands output budget",
+      "kind": "literal",
+      "target": 200000,
+      "status": "AUTO",
+      "reason": "literal 48e3 -> 200000",
+      "evidence": "maxChars??48e3"
+    },
+    {
+      "key": "search_output",
+      "area": "search_codebase output budget",
+      "kind": "symbol-decl",
+      "target": 200000,
+      "status": "AUTO",
+      "reason": "WQt: 48e3 -> 200000",
+      "evidence": "WQt=48e3"
+    },
+    {
+      "key": "read_output_chars",
+      "area": "read_files output budget",
+      "kind": "symbol-decl",
+      "target": 200000,
+      "status": "AUTO",
+      "reason": "nXo: 48e3 -> 200000",
+      "evidence": "nXo=48e3"
+    },
+    {
+      "key": "read_max_lines",
+      "area": "read_files max lines",
+      "kind": "symbol-decl",
+      "target": 20000,
+      "status": "AUTO",
+      "reason": "QQt: 2e3 -> 20000",
+      "evidence": "QQt=2e3"
+    },
+    {
+      "key": "read_line_chars",
+      "area": "read_files per-line chars",
+      "kind": "symbol-decl",
+      "target": 20000,
+      "status": "AUTO",
+      "reason": "jCn: 2e3 -> 20000",
+      "evidence": "jCn=2e3"
+    },
+    {
+      "key": "attached_file_content",
+      "area": "attached file content limit",
+      "kind": "literal",
+      "target": 4000000,
+      "status": "AUTO",
+      "reason": "literal 409600 -> 4000000",
+      "evidence": ",e=409600){if(t.length<=e)return t"
+    },
+    {
+      "key": "web_fetch_content_slice",
+      "area": "web fetch content slice",
+      "kind": "literal",
+      "target": 200000,
+      "status": "AUTO",
+      "reason": "literal 5e4 -> 200000",
+      "evidence": "slice(0,5e4)"
+    },
+    {
+      "key": "web_fetch_content_check",
+      "area": "web fetch length check",
+      "kind": "literal",
+      "target": 200000,
+      "status": "AUTO",
+      "reason": "literal 5e4 -> 200000",
+      "evidence": "A.length>5e4&&"
+    },
+    {
+      "key": "web_fetch_notice_text",
+      "area": "web fetch notice text",
+      "kind": "literal",
+      "target": 200000,
+      "status": "AUTO",
+      "reason": "literal 50000 -> 200000",
+      "evidence": "showing first 50000 of"
+    },
+    {
+      "key": "editor_input_guard",
+      "area": "editor payload guard",
+      "kind": "symbol-decl",
+      "target": 100000,
+      "status": "AUTO",
+      "reason": "E0e: 6e3 -> 100000",
+      "evidence": "E0e=6e3"
+    },
+    {
+      "key": "message_builder_tool_result",
+      "area": "message builder: tool-result forwarding cap",
+      "kind": "symbol-decl",
+      "target": 300000,
+      "status": "AUTO",
+      "reason": "e5p: 8e3 -> 300000",
+      "evidence": "e5p=8e3"
+    },
+    {
+      "key": "message_builder_file_content",
+      "area": "message builder: file content cap",
+      "kind": "symbol-decl",
+      "target": 200000,
+      "status": "AUTO",
+      "reason": "t5p: 5e4 -> 200000",
+      "evidence": "t5p=5e4"
+    },
+    {
+      "key": "message_builder_assistant_text",
+      "area": "message builder: assistant text cap",
+      "kind": "symbol-decl",
+      "target": 400000,
+      "status": "AUTO",
+      "reason": "n5p: 2e5 -> 400000",
+      "evidence": "n5p=2e5"
+    },
+    {
+      "key": "message_builder_tool_markup",
+      "area": "message builder: assistant tool-call markup cap",
+      "kind": "symbol-decl",
+      "target": 100000,
+      "status": "AUTO",
+      "reason": "i5p: 12e3 -> 100000",
+      "evidence": "i5p=12e3"
+    },
+    {
+      "key": "sdk_tool_budgets",
+      "area": "sdk tool budgets (shell tail buffer, grep budget, read bytes, line guard, glob, traversal)",
+      "kind": "block-signature",
+      "target": null,
+      "status": "AUTO",
+      "reason": "Suo:102400->500000, Wad:262144->2000000, OKe:102400->200000, qad:2000->20000, Gad:200->2000, Had:40->100, zad:50000->200000",
+      "evidence": "Suo=102400,Zfo=12e4,Wad=262144,OKe=102400,qad=2e3,Gad=200,Had=40,zad=5e4"
+    }
+  ],
+  "edits": [
+    {
+      "old": "maxChars??48e3",
+      "new": "maxChars??200000"
+    },
+    {
+      "old": "WQt=48e3",
+      "new": "WQt=200000"
+    },
+    {
+      "old": "nXo=48e3",
+      "new": "nXo=200000"
+    },
+    {
+      "old": "QQt=2e3",
+      "new": "QQt=20000"
+    },
+    {
+      "old": "jCn=2e3",
+      "new": "jCn=20000"
+    },
+    {
+      "old": ",e=409600){if(t.length<=e)return t",
+      "new": ",e=4000000){if(t.length<=e)return t"
+    },
+    {
+      "old": "slice(0,5e4)",
+      "new": "slice(0,200000)"
+    },
+    {
+      "old": "A.length>5e4&&",
+      "new": "A.length>200000&&"
+    },
+    {
+      "old": "showing first 50000 of",
+      "new": "showing first 200000 of"
+    },
+    {
+      "old": "E0e=6e3",
+      "new": "E0e=100000"
+    },
+    {
+      "old": "e5p=8e3",
+      "new": "e5p=300000"
+    },
+    {
+      "old": "t5p=5e4",
+      "new": "t5p=200000"
+    },
+    {
+      "old": "n5p=2e5",
+      "new": "n5p=400000"
+    },
+    {
+      "old": "i5p=12e3",
+      "new": "i5p=100000"
+    },
+    {
+      "old": "Suo=102400",
+      "new": "Suo=500000"
+    },
+    {
+      "old": "Wad=262144",
+      "new": "Wad=2000000"
+    },
+    {
+      "old": "OKe=102400",
+      "new": "OKe=200000"
+    },
+    {
+      "old": "qad=2e3",
+      "new": "qad=20000"
+    },
+    {
+      "old": "Gad=200",
+      "new": "Gad=2000"
+    },
+    {
+      "old": "Had=40",
+      "new": "Had=100"
+    },
+    {
+      "old": "zad=5e4",
+      "new": "zad=200000"
+    }
+  ]
+}

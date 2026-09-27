@@ -1,0 +1,198 @@
+name: detect-new-cline-release
+
+# Detects a new Cline release, re-derives every anchor edit for that build, verifies the
+# result, and publishes patch artifacts as a GitHub release. A fully detected version is
+# published as the "latest" release; a version with unresolved locators is published as a
+# prerelease and an issue is opened for manual mapping.
+
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Force a Cline version (e.g. 4.1.22). Empty = latest upstream release."
+        required: false
+        default: ""
+      dry_run:
+        description: "Detect and report only: no commit, no release."
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: detect-new-cline-release
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve upstream release
+        id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          forced="${{ inputs.version }}"
+          if [ -n "$forced" ]; then
+            tag="v${forced#v}"
+          else
+            tag="$(gh api repos/cline/cline/releases/latest --jq .tag_name)"
+          fi
+          version="${tag#v}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          gh api "repos/cline/cline/releases/tags/$tag" \
+            --jq '{tag: .tag_name, published: .published_at, vsix: [.assets[] | select(.name | endswith(".vsix")) | {name, size, digest}]}' \
+            > .work-release.json
+          echo "--- upstream release ---"
+          cat .work-release.json
+
+      - name: Skip if already supported
+        id: known
+        run: |
+          set -euo pipefail
+          version="${{ steps.resolve.outputs.version }}"
+          if node -e "const a=require('./anchors/anchors.json');process.exit(a.versions['$version']?0:1)"; then
+            echo "already=$version" >> "$GITHUB_OUTPUT"
+            echo "::notice title=no-op::$version is already present in anchors/anchors.json"
+          fi
+
+      - name: Download upstream VSIX
+        if: steps.known.outputs.already == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p .work
+          gh release download "${{ steps.resolve.outputs.tag }}" --repo cline/cline --pattern '*.vsix' --dir .work
+
+      - name: Extract extension bundle
+        if: steps.known.outputs.already == ''
+        run: |
+          set -euo pipefail
+          mkdir -p .work/extract
+          unzip -o -q .work/*.vsix -d .work/extract
+          bundle="$(find .work/extract -maxdepth 3 -name extension.js | head -n 1)"
+          test -n "$bundle" || { echo "extension.js not found in vsix"; exit 1; }
+          cp "$bundle" .work/extension.js
+          ls -l .work/extension.js
+          sha256sum .work/extension.js
+
+      - name: Detect anchors
+        id: detect
+        if: steps.known.outputs.already == ''
+        run: |
+          set +e
+          node tools/cline-limits-tool.mjs detect \
+            --bundle .work/extension.js \
+            --version "${{ steps.resolve.outputs.version }}" > .work/detect.txt 2>&1
+          code=$?
+          set -e
+          cat .work/detect.txt
+          if [ "$code" -eq 0 ]; then
+            echo "status=AUTO" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=REVIEW" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Render supported-versions docs
+        if: steps.known.outputs.already == '' && inputs.dry_run != true
+        run: node tools/cline-limits-tool.mjs render-docs
+
+      - name: Upload detection report
+        if: always() && steps.known.outputs.already == ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: detection-${{ steps.resolve.outputs.version }}
+          path: |
+            anchors/anchors.json
+            anchors/reports/${{ steps.resolve.outputs.version }}.json
+            .work/detect.txt
+            .work-release.json
+
+      - name: Commit anchors and docs
+        if: steps.known.outputs.already == '' && inputs.dry_run != true
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add anchors docs
+          if git diff --cached --quiet; then
+            echo "nothing to commit"
+          else
+            git commit -m "Add anchors for Cline ${{ steps.resolve.outputs.version }} (${{ steps.detect.outputs.status }})"
+            git push
+          fi
+
+      - name: Assemble release assets
+        id: assets
+        if: steps.known.outputs.already == '' && inputs.dry_run != true
+        run: |
+          set -euo pipefail
+          version="${{ steps.resolve.outputs.version }}"
+          status="${{ steps.detect.outputs.status }}"
+          mkdir -p release-assets
+          cp scripts/patch_cline_limits.ps1 scripts/revert_cline_limits.ps1 release-assets/
+          cp anchors/anchors.json release-assets/
+          cp "anchors/reports/$version.json" "release-assets/REPORT-$version.json"
+          cp docs/supported-versions.md release-assets/SUPPORTED-VERSIONS.md
+          node tools/cline-limits-tool.mjs notes --version "$version" --repo-root . > release-assets/RELEASE-NOTES.md
+          (cd release-assets && sha256sum ./* > SHA256SUMS.txt)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          ls -l release-assets
+
+      - name: Publish latest release (fully detected)
+        if: steps.detect.outputs.status == 'AUTO' && inputs.dry_run != true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="${{ steps.resolve.outputs.version }}"
+          gh release create "patch-v$version" \
+            --latest \
+            --title "Patch for Cline $version (auto-detected)" \
+            --notes-file release-assets/RELEASE-NOTES.md \
+            release-assets/*
+
+      - name: Publish prerelease (review required)
+        if: steps.detect.outputs.status == 'REVIEW' && inputs.dry_run != true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="${{ steps.resolve.outputs.version }}"
+          gh release create "patch-v$version-review" \
+            --prerelease \
+            --title "Patch for Cline $version (partial - manual review required)" \
+            --notes-file release-assets/RELEASE-NOTES.md \
+            release-assets/*
+
+      - name: Open issue for manual mapping
+        if: steps.detect.outputs.status == 'REVIEW' && inputs.dry_run != true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="${{ steps.resolve.outputs.version }}"
+          {
+            echo "Automatic anchor detection for Cline \`$version\` did not resolve every rule."
+            echo
+            echo '```text'
+            cat .work/detect.txt
+            echo '```'
+            echo
+            echo "Fix: open \`anchors/locators.json\`, refresh the reported rules against this build"
+            echo "(the report in \`anchors/reports/$version.json\` contains the evidence), then rerun"
+            echo "\`node tools/cline-limits-tool.mjs detect --bundle <extension.js> --version $version\`."
+          } > .work/issue.md
+          gh issue create \
+            --title "Anchors need manual review for Cline $version" \
+            --body-file .work/issue.md
