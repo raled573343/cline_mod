@@ -14,7 +14,7 @@ ever redistributed.
 | Patched file | `dist/extension.js` (single minified CommonJS bundle) |
 | Size before patch | `26 360 724` bytes |
 | SHA-256 before patch | `0035a6327275fd3f750ae7cbabf944f2d31f6f36f53a37a808eff7b0421e2121` |
-| SHA-256 after patch | recorded in `patch-manifest.json` next to each backup |
+| SHA-256 after patch (4.1.21 reference run) | `d27e72141dab37b1241509018d14a3283cc3aab53c10290c7457dbe4f443edf9` — also recorded in `patch-manifest.json` next to each backup |
 
 ## 2. Upstream release provenance
 
@@ -41,8 +41,9 @@ numbers, not creative expression, and are not redistributed here as a work.
    `[Content truncated: showing first 50000 of …]`);
 3. each anchor was required to occur **exactly once** in the 26 MB bundle; a duplicate
    would have made the edit unsafe, so such an anchor was rejected;
-4. after patching, the bundle is re-parsed with Node's `vm.Script` to prove it is still
-   syntactically valid.
+4. after patching, the patched text is written to a staged file inside the backup folder and
+   validated with `node --check` **before** the installed bundle is replaced, so a validation
+   failure leaves the live extension untouched.
 
 ## 4. Exact edits (before → after)
 

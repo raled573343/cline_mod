@@ -143,15 +143,16 @@ function Test-BundleSyntax {
 
     $node = Get-NodeExe
     if (-not $node) {
-        Write-Warning 'Node.js not found - skipping syntax validation.'
+        Write-Warning 'Node.js not found - syntax validation skipped.'
         return $false
     }
-    $script = 'const fs=require("fs"),vm=require("vm");new vm.Script(fs.readFileSync(process.argv[1],"utf8"));console.log("SYNTAX_OK");'
-    $out = & $node -e $script $BundlePath 2>&1
+    # `node --check` is used instead of `node -e "<script>"` because Windows
+    # PowerShell 5.1 mangles double quotes inside a native command argument.
+    $out = & $node --check $BundlePath 2>&1
     if ($LASTEXITCODE -ne 0) {
-        throw "Bundle failed syntax validation after patching: $out"
+        throw "Bundle failed syntax validation: $out"
     }
-    Write-Host ('  syntax validation: {0}' -f ($out | Select-Object -First 1)) -ForegroundColor DarkGray
+    Write-Host '  syntax validation: OK (node --check)' -ForegroundColor DarkGray
     return $true
 }
 
@@ -226,8 +227,14 @@ $patched = $text
 foreach ($edit in $script:Edits) { $patched = $patched.Replace($edit.Old, $edit.New) }
 
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+# Validate the patched text as a file *before* the live bundle is touched, so a
+# failure leaves the installed extension untouched.
+$staged = Join-Path $backup 'extension.patched.js'
+[IO.File]::WriteAllText($staged, $patched, $utf8NoBom)
+Test-BundleSyntax -BundlePath $staged | Out-Null
+
 [IO.File]::WriteAllText($bundlePath, $patched, $utf8NoBom)
-Test-BundleSyntax -BundlePath $bundlePath | Out-Null
 
 $afterHash = (Get-FileHash -LiteralPath $bundlePath -Algorithm SHA256).Hash.ToLower()
 $record = [pscustomobject]@{

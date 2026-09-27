@@ -73,6 +73,31 @@ function Show-Backups {
     return $records
 }
 
+function Resolve-InstalledClineExtension {
+    $searchRoots = @(
+        (Join-Path $env:USERPROFILE '.vscode\extensions'),
+        (Join-Path $env:USERPROFILE '.cursor\extensions'),
+        (Join-Path $env:USERPROFILE '.vscode-insiders\extensions')
+    )
+    $found = @()
+    foreach ($r in $searchRoots) {
+        if (Test-Path $r) {
+            $found += @(Get-ChildItem -LiteralPath $r -Directory -Filter 'saoudrizwan.claude-dev-*' -ErrorAction SilentlyContinue)
+        }
+    }
+    if ($found.Count -eq 0) {
+        throw 'Cline extension folder not found. Pass -ExtensionRoot explicitly.'
+    }
+    $sorted = $found | Sort-Object -Property @{
+        Expression = {
+            $v = $_.Name -replace '^saoudrizwan\.claude-dev-', ''
+            try { [version]$v } catch { [version]'0.0.0' }
+        }
+        Descending = $true
+    }
+    return $sorted[0].FullName
+}
+
 if ($List) {
     Show-Backups -Root $BackupRoot | Out-Null
     return
@@ -109,9 +134,14 @@ if (Test-Path $manifestPath) {
     $targetManifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
 }
 
-$root = if ($ExtensionRoot) { (Resolve-Path -LiteralPath $ExtensionRoot).Path }
-        elseif ($targetManifest) { $targetManifest.extensionRoot }
-        else { throw 'Cannot determine the extension folder. Pass -ExtensionRoot.' }
+if ($ExtensionRoot) {
+    $root = (Resolve-Path -LiteralPath $ExtensionRoot).Path
+} elseif ($targetManifest -and $targetManifest.extensionRoot) {
+    $root = $targetManifest.extensionRoot
+} else {
+    $root = Resolve-InstalledClineExtension
+    Write-Warning ("Backup has no manifest - using detected extension folder: {0}" -f $root)
+}
 
 $bundlePath = Join-Path $root 'dist\extension.js'
 if (-not (Test-Path $bundlePath)) { throw "No bundle at $bundlePath" }
