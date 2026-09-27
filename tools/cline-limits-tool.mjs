@@ -167,10 +167,16 @@ function resolveRule(rule, bundle) {
 		candidates[0].assignments.forEach((assignment, index) => {
 			const target = rule.targets[index];
 			if (target === null || target === undefined) return;
-			const oldText = assignment.text;
 			const current = Number(assignment.groups[1]);
 			if (current === target) return;
-			edits.push({ old: oldText, new: oldText.replace(assignment.groups[1], String(target)) });
+			// Include a trailing comma when the assignment is followed by one, so that an old
+			// anchor can never match inside its own replacement (e.g. `Gad=200` in `Gad=2000`).
+			const after = candidates[0].run.text[assignment.index + assignment.text.length] === "," ? "," : "";
+			const oldText = assignment.text + after;
+			edits.push({
+				old: oldText,
+				new: `${assignment.text.replace(assignment.groups[1], String(target))}${after}`,
+			});
 			detail.push(`${assignment.groups[0]}:${current}->${target}`);
 		});
 		return {

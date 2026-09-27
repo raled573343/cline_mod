@@ -1,6 +1,7 @@
 {
   "version": "4.1.21",
-  "detectedAt": "2026-09-27T13:48:38.512Z",
+  "upstreamTag": null,
+  "detectedAt": "2026-09-27T13:58:05.821Z",
   "status": "AUTO",
   "ruleCount": 15,
   "autoCount": 15,
@@ -205,28 +206,28 @@
       "new": "i5p=100000"
     },
     {
-      "old": "Suo=102400",
-      "new": "Suo=500000"
+      "old": "Suo=102400,",
+      "new": "Suo=500000,"
     },
     {
-      "old": "Wad=262144",
-      "new": "Wad=2000000"
+      "old": "Wad=262144,",
+      "new": "Wad=2000000,"
     },
     {
-      "old": "OKe=102400",
-      "new": "OKe=200000"
+      "old": "OKe=102400,",
+      "new": "OKe=200000,"
     },
     {
-      "old": "qad=2e3",
-      "new": "qad=20000"
+      "old": "qad=2e3,",
+      "new": "qad=20000,"
     },
     {
-      "old": "Gad=200",
-      "new": "Gad=2000"
+      "old": "Gad=200,",
+      "new": "Gad=2000,"
     },
     {
-      "old": "Had=40",
-      "new": "Had=100"
+      "old": "Had=40,",
+      "new": "Had=100,"
     },
     {
       "old": "zad=5e4",

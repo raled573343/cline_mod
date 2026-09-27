@@ -25,7 +25,8 @@
     "4.1.21": {
       "status": "AUTO",
       "method": "detected",
-      "detectedAt": "2026-09-27T13:48:38.512Z",
+      "upstreamTag": null,
+      "detectedAt": "2026-09-27T13:58:05.821Z",
       "bundleBytesBefore": 26360724,
       "bundleSha256Before": "0035a6327275fd3f750ae7cbabf944f2d31f6f36f53a37a808eff7b0421e2121",
       "bundleBytesAfter": 26360764,
@@ -90,28 +91,28 @@
           "new": "i5p=100000"
         },
         {
-          "old": "Suo=102400",
-          "new": "Suo=500000"
+          "old": "Suo=102400,",
+          "new": "Suo=500000,"
         },
         {
-          "old": "Wad=262144",
-          "new": "Wad=2000000"
+          "old": "Wad=262144,",
+          "new": "Wad=2000000,"
         },
         {
-          "old": "OKe=102400",
-          "new": "OKe=200000"
+          "old": "OKe=102400,",
+          "new": "OKe=200000,"
         },
         {
-          "old": "qad=2e3",
-          "new": "qad=20000"
+          "old": "qad=2e3,",
+          "new": "qad=20000,"
         },
         {
-          "old": "Gad=200",
-          "new": "Gad=2000"
+          "old": "Gad=200,",
+          "new": "Gad=2000,"
         },
         {
-          "old": "Had=40",
-          "new": "Had=100"
+          "old": "Had=40,",
+          "new": "Had=100,"
         },
         {
           "old": "zad=5e4",
@@ -120,5 +121,5 @@
       ]
     }
   },
-  "updatedAt": "2026-09-27T13:48:38.512Z"
+  "updatedAt": "2026-09-27T13:58:05.821Z"
 }

@@ -49,12 +49,19 @@ jobs:
           }
           if ($failed) { exit 1 }
 
-      - name: Patcher help smoke test
+      - name: Patcher fails clearly without a bundle
         shell: pwsh
         run: |
-          $output = ./scripts/patch_cline_limits.ps1 -Report -ExtensionRoot /nonexistent 2>&1 | Out-String
+          $tmp = Join-Path ([Environment]::GetFolderPath('Temp')) 'cline-mod-ci-empty'
+          New-Item -ItemType Directory -Force -Path $tmp | Out-Null
+          $output = try {
+            ./scripts/patch_cline_limits.ps1 -Report -ExtensionRoot $tmp 2>&1 | Out-String
+          } catch {
+            $_.Exception.Message
+          }
           Write-Host $output
-          if ($output -notmatch 'extension folder not found|No dist') {
-            Write-Host "::error::expected a clear failure for a missing extension folder"
+          if ($output -notmatch 'No dist') {
+            Write-Host "::error::expected a clear failure for a folder without dist/extension.js"
             exit 1
           }
+          Write-Host 'patcher failure path OK'
