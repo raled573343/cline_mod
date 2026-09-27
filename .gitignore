@@ -1,0 +1,16 @@
+# local backups produced by scripts/patch_cline_limits.ps1
+backup/
+*.bak
+*.orig
+
+# build artefacts
+*.vsix
+dist/
+tmp/
+.tmp/
+
+# logs and editor noise
+*.log
+.vscode/
+.idea/
+desktop.ini
