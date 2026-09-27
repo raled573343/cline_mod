@@ -276,6 +276,7 @@ function cmdDetect(args, repoRoot) {
 
 	const report = {
 		version,
+		upstreamTag: typeof args["upstream-tag"] === "string" ? args["upstream-tag"] : null,
 		detectedAt: new Date().toISOString(),
 		status: review.length === 0 && applied.ok && syntax.ok ? "AUTO" : "REVIEW",
 		ruleCount: results.length,
@@ -301,6 +302,7 @@ function cmdDetect(args, repoRoot) {
 	anchors.versions[version] = {
 		status: report.status,
 		method: "detected",
+		upstreamTag: report.upstreamTag,
 		detectedAt: report.detectedAt,
 		bundleBytesBefore: report.bundleBytesBefore,
 		bundleSha256Before: report.bundleSha256Before,

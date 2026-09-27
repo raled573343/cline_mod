@@ -43,9 +43,18 @@ jobs:
           if [ -n "$forced" ]; then
             tag="v${forced#v}"
           else
-            tag="$(gh api repos/cline/cline/releases/latest --jq .tag_name)"
+            # `releases/latest` is not always the VS Code extension: the same feed carries
+            # desktop-v* and other artifacts. Pick the newest non-draft release that
+            # actually ships a .vsix asset and whose tag looks like v<semver>.
+            tag="$(gh api 'repos/cline/cline/releases?per_page=60' \
+              --jq '[.[] | select(.draft == false)
+                        | select(any(.assets[]?; .name | endswith(".vsix")))
+                        | select(.tag_name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))
+                        | .tag_name] | .[0]')"
           fi
+          test -n "$tag" || { echo "::error::no upstream release with a .vsix asset found"; exit 1; }
           version="${tag#v}"
+          echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::unexpected version '$version'"; exit 1; }
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           gh api "repos/cline/cline/releases/tags/$tag" \
@@ -92,7 +101,8 @@ jobs:
           set +e
           node tools/cline-limits-tool.mjs detect \
             --bundle .work/extension.js \
-            --version "${{ steps.resolve.outputs.version }}" > .work/detect.txt 2>&1
+            --version "${{ steps.resolve.outputs.version }}" \
+            --upstream-tag "${{ steps.resolve.outputs.tag }}" > .work/detect.txt 2>&1
           code=$?
           set -e
           cat .work/detect.txt
