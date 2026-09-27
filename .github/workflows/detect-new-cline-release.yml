@@ -93,8 +93,11 @@ jobs:
           # refuse anything that cannot be the real bundle.
           echo "candidates:"
           find .work/extract -name extension.js -printf '%s %p\n' | sort -nr
+          bundle=""
           if [ -f .work/extract/extension/dist/extension.js ]; then
             bundle=".work/extract/extension/dist/extension.js"
+          elif [ -f .work/extract/extension/next/dist/extension.js ]; then
+            bundle=".work/extract/extension/next/dist/extension.js"
           else
             bundle="$(find .work/extract -name extension.js -printf '%s %p\n' | sort -nr | head -n 1 | cut -d' ' -f2-)"
           fi

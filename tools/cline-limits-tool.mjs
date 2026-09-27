@@ -127,7 +127,10 @@ function resolveRule(rule, bundle) {
 		if (!rule.__symbol) {
 			return { status: "REVIEW", reason: "no symbol captured", evidence: null };
 		}
-		const declPattern = `\\b${rule.__symbol}=([0-9]+(?:\\.[0-9]+)?e[0-9]+|[0-9]+)`;
+		// Minified symbols may start with `$`, which is a regex anchor, so escape the name and
+		// locate the declaration with a lookbehind instead of `\b`.
+		const symbolPattern = rule.__symbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		const declPattern = `(?<![A-Za-z0-9_$])${symbolPattern}=([0-9]+(?:\\.[0-9]+)?e[0-9]+|[0-9]+)`;
 		const decl = findAll(bundle, declPattern);
 		if (decl.length !== 1) {
 			return { status: "REVIEW", reason: `declaration of ${rule.__symbol} matched ${decl.length} times`, evidence: null };
