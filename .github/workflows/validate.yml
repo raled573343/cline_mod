@@ -52,7 +52,7 @@ jobs:
       - name: Patcher fails clearly without a bundle
         shell: pwsh
         run: |
-          $tmp = Join-Path ([Environment]::GetFolderPath('Temp')) 'cline-mod-ci-empty'
+          $tmp = Join-Path ([IO.Path]::GetTempPath()) 'cline-mod-ci-empty'
           New-Item -ItemType Directory -Force -Path $tmp | Out-Null
           $output = try {
             ./scripts/patch_cline_limits.ps1 -Report -ExtensionRoot $tmp 2>&1 | Out-String

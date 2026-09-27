@@ -32,7 +32,7 @@ param(
     [Parameter(ParameterSetName = 'Official')]
     [string]$VsixPath,
 
-    [string]$BackupRoot = (Join-Path ([Environment]::GetFolderPath('UserProfile')) '.cline-limits-patch/backup'),
+    [string]$BackupRoot = (Join-Path $HOME '.cline-limits-patch/backup'),
     [string]$ExtensionRoot
 )
 
@@ -74,7 +74,7 @@ function Show-Backups {
 }
 
 function Resolve-InstalledClineExtension {
-    $userHome = [Environment]::GetFolderPath('UserProfile')
+    $userHome = $HOME
     $searchRoots = @(
         (Join-Path $userHome '.vscode/extensions'),
         (Join-Path $userHome '.cursor/extensions'),

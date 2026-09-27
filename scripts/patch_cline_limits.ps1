@@ -49,7 +49,7 @@ param(
 
     [string]$ExtensionRoot,
     [string]$ExpectedVersion = '4.1.21',
-    [string]$BackupRoot = (Join-Path ([Environment]::GetFolderPath('UserProfile')) '.cline-limits-patch/backup'),
+    [string]$BackupRoot = (Join-Path $HOME '.cline-limits-patch/backup'),
 
     # Optional path to anchors/anchors.json. When omitted the script looks next to itself
     # (..\anchors\anchors.json) and falls back to the embedded 4.1.21 table.
@@ -105,7 +105,7 @@ function Resolve-ClineExtension {
         return $root
     }
 
-    $userHome = [Environment]::GetFolderPath('UserProfile')
+    $userHome = $HOME
     $searchRoots = @(
         (Join-Path $userHome '.vscode/extensions'),
         (Join-Path $userHome '.cursor/extensions'),
