@@ -1,3 +1,5 @@
+<p align="center"><img width="468" height="85" alt="image" src="https://github.com/user-attachments/assets/bc5c35c0-3913-4e74-9fa6-0eceaa5af266" /></p>
+
 # cline_mod — Cline context/output limits patch
 
 **Unofficial, local, reversible patch for the Cline VS Code extension that raises the
