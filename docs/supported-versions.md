@@ -7,7 +7,8 @@ Generated from [`anchors/anchors.json`](../anchors/anchors.json). Run
 
 | Cline version | Anchors | Status | Bundle SHA-256 (before) | Patched SHA-256 | Edits | Detected |
 |---|---|---|---|---|---:|---|
-| `4.1.21` | auto-detected | AUTO | `0035a6327275fd3f…` | `db84361b262e3872…` | 21 | 2026-09-27T13:48:38.512Z |
+| `4.1.21` | auto-detected | AUTO | `0035a6327275fd3f…` | `db84361b262e3872…` | 21 | 2026-09-27T13:58:05.821Z |
+| `4.1.22` | auto-detected | AUTO | `369bfc6bd01de72d…` | `804f1902e9590493…` | 21 | 2026-09-30T11:09:53.648Z |
 
 `AUTO` means every locator rule resolved and the patched bundle passed `node --check`.
 `REVIEW` means at least one rule could not be located in that build - the published anchors

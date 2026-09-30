@@ -119,7 +119,105 @@
           "new": "zad=200000"
         }
       ]
+    },
+    "4.1.22": {
+      "status": "AUTO",
+      "method": "detected",
+      "upstreamTag": "v4.1.22",
+      "detectedAt": "2026-09-30T11:09:53.648Z",
+      "bundleBytesBefore": 25719093,
+      "bundleSha256Before": "369bfc6bd01de72d26013ed6ebac2c7c9cb5a564bb8ff14679d6a1ba2ab76178",
+      "bundleBytesAfter": 25719133,
+      "bundleSha256After": "804f1902e95904934e64f9b43386aac8fc4c080d391ac36eee6a7a95b02f873e",
+      "applyCheck": "PASS",
+      "syntaxCheck": "PASS",
+      "edits": [
+        {
+          "old": "maxChars??48e3",
+          "new": "maxChars??200000"
+        },
+        {
+          "old": "sNt=48e3",
+          "new": "sNt=200000"
+        },
+        {
+          "old": "u5o=48e3",
+          "new": "u5o=200000"
+        },
+        {
+          "old": "oNt=2e3",
+          "new": "oNt=20000"
+        },
+        {
+          "old": "uhn=2e3",
+          "new": "uhn=20000"
+        },
+        {
+          "old": ",e=409600){if(t.length<=e)return t",
+          "new": ",e=4000000){if(t.length<=e)return t"
+        },
+        {
+          "old": "slice(0,5e4)",
+          "new": "slice(0,200000)"
+        },
+        {
+          "old": "A.length>5e4&&",
+          "new": "A.length>200000&&"
+        },
+        {
+          "old": "showing first 50000 of",
+          "new": "showing first 200000 of"
+        },
+        {
+          "old": "Hhe=6e3",
+          "new": "Hhe=100000"
+        },
+        {
+          "old": "fAp=8e3",
+          "new": "fAp=300000"
+        },
+        {
+          "old": "hAp=5e4",
+          "new": "hAp=200000"
+        },
+        {
+          "old": "gAp=2e5",
+          "new": "gAp=400000"
+        },
+        {
+          "old": "AAp=12e3",
+          "new": "AAp=100000"
+        },
+        {
+          "old": "tVa=102400,",
+          "new": "tVa=500000,"
+        },
+        {
+          "old": "YUc=262144,",
+          "new": "YUc=2000000,"
+        },
+        {
+          "old": "lVe=102400,",
+          "new": "lVe=200000,"
+        },
+        {
+          "old": "XUc=2e3,",
+          "new": "XUc=20000,"
+        },
+        {
+          "old": "ZUc=200,",
+          "new": "ZUc=2000,"
+        },
+        {
+          "old": "eWc=40,",
+          "new": "eWc=100,"
+        },
+        {
+          "old": "tWc=5e4",
+          "new": "tWc=200000"
+        }
+      ]
     }
   },
-  "updatedAt": "2026-09-27T13:58:05.821Z"
+  "updatedAt": "2026-09-30T11:09:53.648Z"
 }
