@@ -30,14 +30,21 @@ jobs:
         run: |
           set -euo pipefail
           node tools/cline-limits-tool.mjs render-docs
-          node tools/cline-limits-tool.mjs notes --version "$(node -e "console.log(Object.keys(require('./anchors/anchors.json').versions).pop())")" > /dev/null
+          latest="$(node -e "console.log(Object.keys(require('./anchors/anchors.json').versions).pop())")"
+          node tools/cline-limits-tool.mjs notes --version "$latest" > /dev/null
+          mkdir -p .work-test
+          node tools/cline-limits-tool.mjs standalone --version "$latest" --output .work-test/patch_cline_limits.ps1
+          test -s .work-test/patch_cline_limits.ps1
+          grep -q "\"$latest\"" .work-test/patch_cline_limits.ps1
           echo "tool smoke test OK"
 
       - name: Parse-check PowerShell scripts
         shell: pwsh
         run: |
           $failed = $false
-          foreach ($script in Get-ChildItem scripts/*.ps1) {
+          $scripts = @(Get-ChildItem scripts/*.ps1)
+          if (Test-Path .work-test/patch_cline_limits.ps1) { $scripts += Get-Item .work-test/patch_cline_limits.ps1 }
+          foreach ($script in $scripts) {
             $errors = $null
             [System.Management.Automation.Language.Parser]::ParseFile($script.FullName, [ref]$null, [ref]$errors) | Out-Null
             if ($errors) {
