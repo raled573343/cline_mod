@@ -79,36 +79,50 @@ is opened with the rules that need manual review. Details: [docs/automation.md](
 
 ## Usage
 
+For a normal Windows install, download **only** `patch_cline_limits.ps1` from the matching release and run it:
+
 ```powershell
-# 1. inspect only — shows every anchor, its match count and patch status
-pwsh -File scripts/patch_cline_limits.ps1 -Report
-
-# 2. apply (creates a timestamped backup first)
-pwsh -File scripts/patch_cline_limits.ps1 -Apply
-
-# 3. in VS Code: Command Palette -> "Developer: Reload Window"
+.\patch_cline_limits.ps1
 ```
 
-Optional parameters: `-ExtensionRoot <path>`, `-ExpectedVersion 4.1.21`, `-Force`.
+The script finds the installed Cline version, verifies the exact bundle SHA-256 and every anchor, prints the report, and only then asks:
 
-Backup location: `%USERPROFILE%\.cline-limits-patch\backup\<timestamp>\`
-(`extension.js`, `package.json`, `patch-manifest.json` with before/after SHA-256).
+```text
+Apply patch now? [Y/N]:
+```
+
+Only an explicit `Y` changes anything. If Windows blocks script execution:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\patch_cline_limits.ps1
+```
+
+Optional non-interactive modes:
+
+```powershell
+.\patch_cline_limits.ps1 -Report
+.\patch_cline_limits.ps1 -Apply
+```
+
+After a successful patch, run **Developer: Reload Window** in VS Code.
+
+The release patcher is self-contained: it does not need `anchors.json`, a repository checkout, network access, `-ExpectedVersion`, `-AnchorsPath`, or `-Force`.
+
+Backup location: `%USERPROFILE%\.cline-limits-patch\backup\<timestamp>\`.
 
 ### Verify it worked
 
-```powershell
-# should now return ~200 000 characters instead of eliding the middle at 48 000
-1..400 | ForEach-Object { 'x{0:000}: {1}' -f $_, ('y' * 800) }
+Run the same patcher again. It should report:
+
+```text
+Status: ALREADY_PATCHED
 ```
 
 ### Revert
 
 ```powershell
-pwsh -File scripts/revert_cline_limits.ps1 -List                 # show backups
-pwsh -File scripts/revert_cline_limits.ps1                       # restore newest
-pwsh -File scripts/revert_cline_limits.ps1 -BackupDir <path>     # restore specific
-# strongest reset: reinstall the official build
-pwsh -File scripts/revert_cline_limits.ps1 -ReinstallOfficialVsix -VsixPath .\cline-4.1.21.vsix
+powershell -ExecutionPolicy Bypass -File .\revert_cline_limits.ps1 -List
+powershell -ExecutionPolicy Bypass -File .\revert_cline_limits.ps1
 ```
 
 ## Risks and caveats
