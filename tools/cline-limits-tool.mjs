@@ -7,6 +7,7 @@
  *               validate them (uniqueness + `node --check`), record hashes and reports
  *   verify      re-apply a recorded anchor entry to a bundle and recompute hashes
  *   render-docs regenerate docs/supported-versions.md from anchors/anchors.json
+ *   standalone  render a one-file patcher with one version embedded
  *
  * The tool is dependency-free (Node 18+). Patching itself stays in
  * scripts/patch_cline_limits.ps1, which reads the same anchors/anchors.json.
@@ -398,6 +399,40 @@ function cmdRenderDocs(args, repoRoot) {
 	return 0;
 }
 
+function cmdStandalone(args, repoRoot) {
+	const version = args.version;
+	const output = args.output;
+	if (!version) throw new Error("standalone: --version is required");
+	if (!output) throw new Error("standalone: --output is required");
+
+	const anchors = readJson(path.join(repoRoot, ANCHORS_FILE));
+	const entry = anchors.versions?.[version];
+	if (!entry) throw new Error(`standalone: version ${version} is not recorded in ${ANCHORS_FILE}`);
+	if (!["AUTO", "VERIFIED"].includes(entry.status)) {
+		throw new Error(`standalone: version ${version} has status ${entry.status}; refusing to publish installer`);
+	}
+
+	const templatePath = path.join(repoRoot, "scripts/patch_cline_limits.ps1");
+	let template = fs.readFileSync(templatePath, "utf8");
+	const begin = "# BEGIN EMBEDDED_ANCHORS";
+	const end = "# END EMBEDDED_ANCHORS";
+	const start = template.indexOf(begin);
+	const finish = template.indexOf(end);
+	if (start < 0 || finish < 0 || finish <= start) {
+		throw new Error("standalone: embedded-anchor markers not found in patcher template");
+	}
+
+	const catalog = { schema: "cline-mod-standalone-v1", versions: { [version]: entry } };
+	const json = JSON.stringify(catalog, null, 2);
+	const block = begin + "\n$script:EmbeddedAnchorsJson = @'\n" + json + "\n'@\n" + end;
+	template = template.slice(0, start) + block + template.slice(finish + end.length);
+
+	const target = path.resolve(output);
+	fs.mkdirSync(path.dirname(target), { recursive: true });
+	fs.writeFileSync(target, template, "utf8");
+	process.stdout.write(`wrote ${target} (standalone Cline ${version}, ${(entry.edits ?? []).length} edits)\n`);
+	return 0;
+}
 function cmdNotes(args, repoRoot) {
 	const version = args.version;
 	if (!version) throw new Error("notes: --version is required");
@@ -427,19 +462,30 @@ function cmdNotes(args, repoRoot) {
 		"",
 		"## Downloads in this release",
 		"",
-		"- `patch_cline_limits.ps1` / `revert_cline_limits.ps1` — patcher and rollback (Windows PowerShell)",
-		"- `anchors.json` — the exact edit table for every supported version",
+		"- `patch_cline_limits.ps1` — self-contained one-file interactive patcher (Windows PowerShell 5.1+)",
+		"- `revert_cline_limits.ps1` — rollback utility",
+		"- `anchors.json` — detection/audit data; not required to install the patch",
 		`- \`REPORT-${version}.json\` — full detection report (per-rule status, evidence, hashes)`,
 		"- `SUPPORTED-VERSIONS.md` — generated support matrix",
 		"- `SHA256SUMS.txt` — checksums of the assets above",
 		"",
 		"## Install",
 		"",
+		"Download only `patch_cline_limits.ps1`, then run:",
+		"",
 		"```powershell",
-		"pwsh -File scripts/patch_cline_limits.ps1 -Report   # inspect anchors",
-		"pwsh -File scripts/patch_cline_limits.ps1 -Apply     # patch + backup",
-		"# then: VS Code -> Command Palette -> \"Developer: Reload Window\"",
+		".\\patch_cline_limits.ps1",
 		"```",
+		"",
+		"It reports the installed build first and asks `Apply patch now? [Y/N]` only when every safety gate passes.",
+		"If Windows execution policy blocks scripts:",
+		"",
+		"```powershell",
+		"powershell -ExecutionPolicy Bypass -File .\\patch_cline_limits.ps1",
+		"```",
+		"",
+		"Optional non-interactive modes: `.\\patch_cline_limits.ps1 -Report` and `.\\patch_cline_limits.ps1 -Apply`.",
+		"After patching: VS Code -> Command Palette -> \"Developer: Reload Window\".",
 		"",
 	];
 
@@ -480,14 +526,17 @@ function main() {
 				return cmdVerify(args, repoRoot);
 			case "render-docs":
 				return cmdRenderDocs(args, repoRoot);
+			case "standalone":
+				return cmdStandalone(args, repoRoot);
 			case "notes":
 				return cmdNotes(args, repoRoot);
 			default:
 				process.stderr.write(
-					"usage: cline-limits-tool.mjs <detect|verify|render-docs|notes> [options]\n" +
+					"usage: cline-limits-tool.mjs <detect|verify|render-docs|standalone|notes> [options]\n" +
 						"  detect --bundle <extension.js> --version <x.y.z> [--dry-run] [--repo-root <dir>]\n" +
 						"  verify --bundle <extension.js> --version <x.y.z> [--repo-root <dir>]\n" +
 						"  render-docs [--repo-root <dir>]\n" +
+						"  standalone --version <x.y.z> --output <file> [--repo-root <dir>]\n" +
 						"  notes --version <x.y.z> [--repo-root <dir>]\n",
 				);
 				return 2;

@@ -1,0 +1,70 @@
+name: refresh-current-release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/patch_cline_limits.ps1"
+      - "scripts/revert_cline_limits.ps1"
+      - "tools/cline-limits-tool.mjs"
+      - "anchors/anchors.json"
+      - "anchors/reports/**"
+      - "docs/supported-versions.md"
+      - ".github/workflows/refresh-current-release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-current-release
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest supported Cline version
+        id: version
+        run: |
+          set -euo pipefail
+          version="$(node - <<'NODE'
+          const a = require('./anchors/anchors.json');
+          const versions = Object.entries(a.versions || {})
+            .filter(([,v]) => v.status === 'AUTO' || v.status === 'VERIFIED')
+            .map(([k]) => k)
+            .sort((a,b) => a.localeCompare(b, undefined, {numeric:true}));
+          if (!versions.length) process.exit(2);
+          process.stdout.write(versions[versions.length - 1]);
+          NODE
+          )"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Refreshing patch-v$version"
+
+      - name: Assemble self-contained release assets
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          mkdir -p release-assets
+          node tools/cline-limits-tool.mjs standalone --version "$version" --output release-assets/patch_cline_limits.ps1
+          cp scripts/revert_cline_limits.ps1 release-assets/
+          cp anchors/anchors.json release-assets/
+          cp "anchors/reports/$version.json" "release-assets/REPORT-$version.json"
+          cp docs/supported-versions.md release-assets/SUPPORTED-VERSIONS.md
+          node tools/cline-limits-tool.mjs notes --version "$version" --repo-root . > release-assets/RELEASE-NOTES.md
+          (cd release-assets && sha256sum ./* > SHA256SUMS.txt)
+          ls -l release-assets
+
+      - name: Refresh existing release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          tag="patch-v$version"
+          gh release view "$tag" >/dev/null
+          gh release upload "$tag" release-assets/* --clobber
+          gh release edit "$tag" --notes-file release-assets/RELEASE-NOTES.md --latest
+          echo "Refreshed $tag"
