@@ -166,7 +166,8 @@ jobs:
           version="${{ steps.resolve.outputs.version }}"
           status="${{ steps.detect.outputs.status }}"
           mkdir -p release-assets
-          cp scripts/patch_cline_limits.ps1 scripts/revert_cline_limits.ps1 release-assets/
+          node tools/cline-limits-tool.mjs standalone --version "$version" --output release-assets/patch_cline_limits.ps1
+          cp scripts/revert_cline_limits.ps1 release-assets/
           cp anchors/anchors.json release-assets/
           cp "anchors/reports/$version.json" "release-assets/REPORT-$version.json"
           cp docs/supported-versions.md release-assets/SUPPORTED-VERSIONS.md
