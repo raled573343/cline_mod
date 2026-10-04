@@ -11,6 +11,8 @@
 
     -Report is read-only and non-interactive.
     -Apply is non-interactive and applies only after all safety checks pass.
+    -SafetyUnlock selects the optional profile that practically disables repeated-call
+      and consecutive-mistake stop thresholds. Without this switch it remains opt-in.
 
     The release workflow embeds the exact anchor table and expected clean/patched
     SHA-256 for the supported Cline build directly into this script.
@@ -26,11 +28,15 @@
 
 .EXAMPLE
     .\patch_cline_limits.ps1 -Apply
+
+.EXAMPLE
+    .\patch_cline_limits.ps1 -Apply -SafetyUnlock
 #>
 [CmdletBinding()]
 param(
     [switch]$Report,
     [switch]$Apply,
+    [switch]$SafetyUnlock,
     [string]$ExtensionRoot,
     [string]$BackupRoot = (Join-Path $HOME '.cline-limits-patch/backup')
 )
@@ -374,18 +380,75 @@ if ([string]$entry.status -ne 'AUTO' -and [string]$entry.status -ne 'VERIFIED') 
     return
 }
 
+function Get-EditGroup {
+    param([pscustomobject]$Edit)
+    if ($Edit.PSObject.Properties.Name -contains 'group' -and [string]$Edit.group) {
+        return [string]$Edit.group
+    }
+    return 'base'
+}
+
+function Test-EditOptional {
+    param([pscustomobject]$Edit)
+    return ($Edit.PSObject.Properties.Name -contains 'optional' -and $Edit.optional -eq $true)
+}
+
+function Get-ProfileStatus {
+    param(
+        [object[]]$ProfileStates,
+        [string]$TargetHash,
+        [string]$InstalledHash,
+        [string]$CleanHash,
+        [string[]]$TrustedHashes
+    )
+    $ready = @($ProfileStates | Where-Object { $_.Status -eq 'READY' })
+    $patched = @($ProfileStates | Where-Object { $_.Status -eq 'ALREADY_PATCHED' })
+    $bad = @($ProfileStates | Where-Object { $_.Status -ne 'READY' -and $_.Status -ne 'ALREADY_PATCHED' })
+
+    if ($bad.Count -gt 0) {
+        return [pscustomobject]@{ Status='UNUSABLE'; Ready=$ready.Count; Patched=$patched.Count; Bad=$bad }
+    }
+    if ($TrustedHashes -notcontains $InstalledHash) {
+        return [pscustomobject]@{ Status='HASH_MISMATCH'; Ready=$ready.Count; Patched=$patched.Count; Bad=$bad }
+    }
+    if ($InstalledHash -eq $TargetHash -and $patched.Count -eq $ProfileStates.Count) {
+        return [pscustomobject]@{ Status='ALREADY_PATCHED'; Ready=0; Patched=$patched.Count; Bad=$bad }
+    }
+    if ($ready.Count -eq 0) {
+        # A known superset profile already contains every edit required by this profile.
+        return [pscustomobject]@{ Status='ALREADY_PATCHED'; Ready=0; Patched=$patched.Count; Bad=$bad }
+    }
+    if ($InstalledHash -eq $CleanHash -and $patched.Count -eq 0) {
+        return [pscustomobject]@{ Status='READY'; Ready=$ready.Count; Patched=0; Bad=$bad }
+    }
+    return [pscustomobject]@{ Status='UPGRADE_READY'; Ready=$ready.Count; Patched=$patched.Count; Bad=$bad }
+}
+
 $bundleFile = Get-Item -LiteralPath $bundlePath
 $beforeHash = (Get-FileHash -LiteralPath $bundlePath -Algorithm SHA256).Hash.ToLower()
 $expectedBefore = ([string]$entry.bundleSha256Before).ToLower()
-$expectedAfter = ([string]$entry.bundleSha256After).ToLower()
 $acceptedSourceHashes = @()
 if ($entry.PSObject.Properties.Name -contains 'acceptedSourceHashes') {
     $acceptedSourceHashes = @($entry.acceptedSourceHashes | ForEach-Object { ([string]$_).ToLower() })
 }
 
+$standardExpectedHash = ([string]$entry.bundleSha256After).ToLower()
+$safetyProfile = $null
+if ($entry.PSObject.Properties.Name -contains 'profiles' -and $entry.profiles) {
+    $safetyProp = $entry.profiles.PSObject.Properties['safety-unlock']
+    if ($safetyProp) { $safetyProfile = $safetyProp.Value }
+}
+$safetyExpectedHash = if ($safetyProfile) { ([string]$safetyProfile.bundleSha256After).ToLower() } else { $null }
+
+$trustedHashes = @($expectedBefore, $standardExpectedHash) + $acceptedSourceHashes
+if ($safetyExpectedHash) { $trustedHashes += $safetyExpectedHash }
+$trustedHashes = @($trustedHashes | Where-Object { $_ } | Select-Object -Unique)
+
 Write-Host ('  bundle    : {0} bytes' -f $bundleFile.Length)
 Write-Host ('  sha256    : {0}' -f $beforeHash)
-Write-Host ('  expected  : {0}' -f $expectedBefore)
+Write-Host ('  clean     : {0}' -f $expectedBefore)
+Write-Host ('  standard  : {0}' -f $standardExpectedHash)
+if ($safetyExpectedHash) { Write-Host ('  unlocked  : {0}' -f $safetyExpectedHash) }
 if ($acceptedSourceHashes.Count -gt 0) {
     Write-Host ('  upgrades  : {0}' -f ($acceptedSourceHashes -join ', '))
 }
@@ -399,63 +462,82 @@ foreach ($edit in $edits) {
     $index += 1
     $states += [pscustomobject]@{
         Id = $index
+        Group = (Get-EditGroup -Edit $edit)
+        Optional = (Test-EditOptional -Edit $edit)
         Status = (Get-AnchorState -Text $text -Edit $edit)
         Old = [string]$edit.old
         New = [string]$edit.new
+        Edit = $edit
     }
 }
-$states | Select-Object Id, Status | Format-Table -AutoSize | Out-String -Width 200 | Write-Host
+$states | Select-Object Id, Group, Status | Format-Table -AutoSize | Out-String -Width 220 | Write-Host
 
-$readyCount = @($states | Where-Object { $_.Status -eq 'READY' }).Count
-$patchedCount = @($states | Where-Object { $_.Status -eq 'ALREADY_PATCHED' }).Count
-$bad = @($states | Where-Object { $_.Status -ne 'READY' -and $_.Status -ne 'ALREADY_PATCHED' })
+$standardStates = @($states | Where-Object { -not $_.Optional })
+$standardResult = Get-ProfileStatus -ProfileStates $standardStates -TargetHash $standardExpectedHash -InstalledHash $beforeHash -CleanHash $expectedBefore -TrustedHashes $trustedHashes
+Write-Host ('Standard profile : {0} ({1} edits)' -f $standardResult.Status, $standardStates.Count)
 
-$status = 'UNUSABLE'
-$knownUpgradeHash = ($acceptedSourceHashes -contains $beforeHash)
-$allStatesKnown = ($bad.Count -eq 0 -and ($readyCount + $patchedCount) -eq $edits.Count)
-if ($beforeHash -eq $expectedAfter -and $patchedCount -eq $edits.Count) {
-    $status = 'ALREADY_PATCHED'
-} elseif ($beforeHash -eq $expectedBefore) {
-    if ($bad.Count -gt 0 -or $readyCount -ne $edits.Count) {
-        $status = 'UNUSABLE'
-    } else {
-        $status = 'READY'
-    }
-} elseif ($knownUpgradeHash) {
-    if (-not $allStatesKnown -or $readyCount -eq 0) {
-        $status = 'UNUSABLE'
-    } else {
-        $status = 'UPGRADE_READY'
-    }
+if ($safetyProfile) {
+    $safetyStates = @($states)
+    $safetyResult = Get-ProfileStatus -ProfileStates $safetyStates -TargetHash $safetyExpectedHash -InstalledHash $beforeHash -CleanHash $expectedBefore -TrustedHashes $trustedHashes
+    $optionalCount = @($states | Where-Object { $_.Optional }).Count
+    Write-Host ('Safety unlock    : {0} (+{1} optional edits; thresholds -> 1,000,000)' -f $safetyResult.Status, $optionalCount)
 } else {
-    $status = 'HASH_MISMATCH'
+    $safetyStates = @()
+    $safetyResult = $null
+    Write-Host 'Safety unlock    : unavailable for this recorded Cline build'
 }
 
+$selectedSafety = $SafetyUnlock.IsPresent
+if (-not $Report -and -not $Apply -and -not $SafetyUnlock -and $safetyProfile) {
+    Write-Host ''
+    Write-Host 'Optional safety-unlock practically disables repeated-call and consecutive-mistake stops.' -ForegroundColor Yellow
+    Write-Host 'A genuinely looping agent can then run for a very long time and consume substantial tokens/cost.' -ForegroundColor Yellow
+    $unlockAnswer = Read-Host 'Enable optional safety-unlock? [y/N]'
+    $selectedSafety = ($unlockAnswer -eq 'Y' -or $unlockAnswer -eq 'y')
+}
+
+if ($selectedSafety -and -not $safetyProfile) {
+    Show-Status -Status 'OPTIONAL_GROUP_UNAVAILABLE' -Color Red
+    Write-Host 'This Cline build has no verified safety-unlock profile.' -ForegroundColor Red
+    if ($Apply) { throw 'Safety-unlock profile is unavailable.' }
+    return
+}
+
+$profileName = if ($selectedSafety) { 'safety-unlock' } else { 'standard' }
+$selectedStates = if ($selectedSafety) { $safetyStates } else { $standardStates }
+$selectedResult = if ($selectedSafety) { $safetyResult } else { $standardResult }
+$expectedAfter = if ($selectedSafety) { $safetyExpectedHash } else { $standardExpectedHash }
+$status = [string]$selectedResult.Status
+$readyCount = [int]$selectedResult.Ready
+$patchedCount = [int]$selectedResult.Patched
+$bad = @($selectedResult.Bad)
+
+Write-Host ('Selected profile : {0}' -f $profileName) -ForegroundColor Cyan
 switch ($status) {
     'READY' {
         Show-Status -Status 'READY' -Color Green
-        Write-Host ('All {0} edits are ready and the clean bundle hash matches.' -f $edits.Count)
+        Write-Host ('All {0} selected edits are ready and the clean bundle hash matches.' -f $selectedStates.Count)
     }
     'UPGRADE_READY' {
         Show-Status -Status 'UPGRADE_READY' -Color Green
-        Write-Host ('Recognized a trusted previous patched bundle. {0} edit(s) already applied; {1} new edit(s) are ready.' -f $patchedCount, $readyCount)
-        Write-Host 'The patcher can upgrade it in place to the current recorded patched SHA-256.'
+        Write-Host ('Recognized a trusted bundle state. {0} selected edit(s) already applied; {1} selected edit(s) are ready.' -f $patchedCount, $readyCount)
+        Write-Host ('The patcher can upgrade it in place to the recorded {0} SHA-256.' -f $profileName)
     }
     'ALREADY_PATCHED' {
         Show-Status -Status 'ALREADY_PATCHED' -Color Yellow
-        Write-Host 'The installed bundle already has the recorded patched SHA-256.'
+        Write-Host ('All edits required by the selected {0} profile are already present.' -f $profileName)
     }
     'HASH_MISMATCH' {
         Show-Status -Status 'HASH_MISMATCH' -Color Red
-        Write-Host 'Installed bundle SHA-256 is neither the recorded clean hash nor the recorded patched hash.' -ForegroundColor Red
+        Write-Host 'Installed bundle SHA-256 is not a recorded clean, prior-patch, or profile hash.' -ForegroundColor Red
         Write-Host 'Refusing to modify an unknown/same-version build.' -ForegroundColor Red
     }
     default {
         Show-Status -Status 'UNUSABLE' -Color Red
         if ($bad.Count -gt 0) {
-            Write-Host ('Unusable anchors: {0}' -f (($bad | ForEach-Object { '#{0}={1}' -f $_.Id, $_.Status }) -join ', ')) -ForegroundColor Red
+            Write-Host ('Unusable selected anchors: {0}' -f (($bad | ForEach-Object { '#{0}={1}' -f $_.Id, $_.Status }) -join ', ')) -ForegroundColor Red
         } else {
-            Write-Host 'Anchor state is mixed or inconsistent with the clean bundle.' -ForegroundColor Red
+            Write-Host 'Selected anchor state is inconsistent.' -ForegroundColor Red
         }
     }
 }
@@ -470,7 +552,7 @@ if ($status -ne 'READY' -and $status -ne 'UPGRADE_READY') {
 $shouldApply = $Apply
 if (-not $Apply) {
     Write-Host ''
-    $answer = Read-Host 'Apply patch now? [Y/N]'
+    $answer = Read-Host ('Apply {0} profile now? [Y/N]' -f $profileName)
     if ($answer -ne 'Y' -and $answer -ne 'y') {
         Write-Host 'No changes made.' -ForegroundColor Yellow
         return
@@ -484,9 +566,9 @@ if ($bundleFile.IsReadOnly) {
 }
 
 $patched = $text
-for ($i = 0; $i -lt $edits.Count; $i += 1) {
-    if ($states[$i].Status -eq 'READY') {
-        $edit = $edits[$i]
+foreach ($state in $selectedStates) {
+    if ($state.Status -eq 'READY') {
+        $edit = $state.Edit
         $patched = $patched.Replace([string]$edit.old, [string]$edit.new)
     }
 }
@@ -525,8 +607,11 @@ $record = [pscustomobject]@{
     nodeExe = (Get-NodeExe)
     embeddedCatalogSchema = $catalog.schema
     sourceStatus = $status
+    selectedProfile = $profileName
+    safetyUnlock = [bool]$selectedSafety
     appliedEditsCount = $readyCount
-    edits = @($edits)
+    selectedEditCount = $selectedStates.Count
+    edits = @($selectedStates | ForEach-Object { $_.Edit })
 }
 $record | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $backup 'patch-manifest.json') -Encoding UTF8
 
