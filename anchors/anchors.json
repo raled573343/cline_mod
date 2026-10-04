@@ -126,111 +126,198 @@
       "status": "AUTO",
       "method": "detected",
       "upstreamTag": "v4.1.22",
-      "detectedAt": "2026-10-04T03:43:23.627Z",
+      "detectedAt": "2026-10-04T12:15:18.313Z",
       "bundleBytesBefore": 25719093,
       "bundleSha256Before": "369bfc6bd01de72d26013ed6ebac2c7c9cb5a564bb8ff14679d6a1ba2ab76178",
       "bundleBytesAfter": 25719141,
       "bundleSha256After": "8e6c5ededaec988a89783af4f3c2030f7f0cb3ffbd6563b8511cca68f58c14a2",
       "applyCheck": "PASS",
       "syntaxCheck": "PASS",
+      "profiles": {
+        "standard": {
+          "groups": [
+            "base"
+          ],
+          "editCount": 23,
+          "bundleBytesAfter": 25719141,
+          "bundleSha256After": "8e6c5ededaec988a89783af4f3c2030f7f0cb3ffbd6563b8511cca68f58c14a2",
+          "applyCheck": "PASS",
+          "syntaxCheck": "PASS"
+        },
+        "safety-unlock": {
+          "groups": [
+            "base",
+            "safety-unlock"
+          ],
+          "editCount": 26,
+          "bundleBytesAfter": 25719159,
+          "bundleSha256After": "df07a61548097a4a9ef5006e140492a4fbb48efdf75512726a7a20265d67f1fe",
+          "applyCheck": "PASS",
+          "syntaxCheck": "PASS"
+        }
+      },
+      "acceptedSourceHashes": [
+        "804f1902e95904934e64f9b43386aac8fc4c080d391ac36eee6a7a95b02f873e"
+      ],
       "edits": [
         {
           "old": "maxChars??48e3",
-          "new": "maxChars??200000"
+          "new": "maxChars??200000",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "sNt=48e3",
-          "new": "sNt=200000"
+          "new": "sNt=200000",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "u5o=48e3",
-          "new": "u5o=200000"
+          "new": "u5o=200000",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "oNt=2e3",
-          "new": "oNt=20000"
+          "new": "oNt=20000",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "uhn=2e3",
-          "new": "uhn=20000"
+          "new": "uhn=20000",
+          "group": "base",
+          "optional": false
         },
         {
           "old": ",e=409600){if(t.length<=e)return t",
-          "new": ",e=4000000){if(t.length<=e)return t"
+          "new": ",e=4000000){if(t.length<=e)return t",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "slice(0,5e4)",
-          "new": "slice(0,200000)"
+          "new": "slice(0,200000)",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "A.length>5e4&&",
-          "new": "A.length>200000&&"
+          "new": "A.length>200000&&",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "showing first 50000 of",
-          "new": "showing first 200000 of"
+          "new": "showing first 200000 of",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "Hhe=6e3",
-          "new": "Hhe=100000"
+          "new": "Hhe=100000",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "fAp=8e3",
-          "new": "fAp=300000"
+          "new": "fAp=300000",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "hAp=5e4",
-          "new": "hAp=200000"
+          "new": "hAp=200000",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "gAp=2e5",
-          "new": "gAp=400000"
+          "new": "gAp=400000",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "AAp=12e3",
-          "new": "AAp=100000"
+          "new": "AAp=100000",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "bashTimeoutMs??3e4",
-          "new": "bashTimeoutMs??3600000"
+          "new": "bashTimeoutMs??3600000",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "timeoutMs:r=3e4,env:i={},combineOutput:a=!0",
-          "new": "timeoutMs:r=3600000,env:i={},combineOutput:a=!0"
+          "new": "timeoutMs:r=3600000,env:i={},combineOutput:a=!0",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "softThreshold:3",
+          "new": "softThreshold:1000000",
+          "group": "safety-unlock",
+          "optional": true
+        },
+        {
+          "old": "hardThreshold:5",
+          "new": "hardThreshold:1000000",
+          "group": "safety-unlock",
+          "optional": true
+        },
+        {
+          "old": "maxConsecutiveMistakes??6",
+          "new": "maxConsecutiveMistakes??1000000",
+          "group": "safety-unlock",
+          "optional": true
         },
         {
           "old": "tVa=102400,",
-          "new": "tVa=500000,"
+          "new": "tVa=500000,",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "YUc=262144,",
-          "new": "YUc=2000000,"
+          "new": "YUc=2000000,",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "lVe=102400,",
-          "new": "lVe=200000,"
+          "new": "lVe=200000,",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "XUc=2e3,",
-          "new": "XUc=20000,"
+          "new": "XUc=20000,",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "ZUc=200,",
-          "new": "ZUc=2000,"
+          "new": "ZUc=2000,",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "eWc=40,",
-          "new": "eWc=100,"
+          "new": "eWc=100,",
+          "group": "base",
+          "optional": false
         },
         {
           "old": "tWc=5e4",
-          "new": "tWc=200000"
+          "new": "tWc=200000",
+          "group": "base",
+          "optional": false
         }
-      ],
-      "acceptedSourceHashes": [
-        "804f1902e95904934e64f9b43386aac8fc4c080d391ac36eee6a7a95b02f873e"
       ]
     }
   },
-  "updatedAt": "2026-10-04T03:43:23.627Z"
+  "updatedAt": "2026-10-04T12:15:18.313Z"
 }
