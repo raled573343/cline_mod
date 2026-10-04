@@ -41,7 +41,7 @@ new Cline releases are picked up automatically (see [docs/automation.md](docs/au
 
 | Cline version | Bundle SHA-256 (before patch) | Status |
 |---|---|---|
-| `4.1.22` | `369bfc6bd01de72d26013ed6ebac2c7c9cb5a564bb8ff14679d6a1ba2ab76178` | **AUTO** — 17/17 locator rules, 23 edits, `node --check` PASS |
+| `4.1.22` | `369bfc6bd01de72d26013ed6ebac2c7c9cb5a564bb8ff14679d6a1ba2ab76178` | **AUTO** — 20/20 locator rules, 23 standard + 3 optional edits, both profiles PASS |
 
 The repository patcher carries an embedded catalog generated from [`anchors/anchors.json`](anchors/anchors.json)
 for supported versions, while each release asset is rendered as a self-contained one-version patcher. It refuses to touch any anchor
@@ -64,6 +64,7 @@ bundle.
 | 10 | assistant text / tool-call markup caps | 200 000 / 12 000 | 400 000 / 100 000 |
 | 11 | SDK tool budgets (grep, shell tail buffer, glob, traversal) | mixed | raised proportionally |
 | 12 | `run_commands` background/default execution timeout (outer wrapper + child-process executor) | 30 s / 30 s | 1 h / 1 h |
+| 13 | optional loop-control profile | 3 / 5 / 6 | 1 000 000 / 1 000 000 / 1 000 000 |
 
 Full evidence, exact anchor strings and the byte-context used to locate each constant:
 [docs/limits-map.md](docs/limits-map.md).
@@ -103,7 +104,13 @@ Optional non-interactive modes:
 ```powershell
 .\patch_cline_limits.ps1 -Report
 .\patch_cline_limits.ps1 -Apply
+.\patch_cline_limits.ps1 -Report -SafetyUnlock
+.\patch_cline_limits.ps1 -Apply -SafetyUnlock
 ```
+
+The optional loop-control profile is separate from the standard patch. Interactive mode
+reports both profiles and asks whether to include it. Non-interactive `-Apply` stays standard
+unless `-SafetyUnlock` is also supplied.
 
 If an older cline_mod patch for the same Cline build is already installed, a newer patcher may report `UPGRADE_READY`. That status is accepted only when the current bundle SHA-256 is explicitly recorded as a trusted previous patched hash and every anchor is either already patched or ready; the patcher then applies only the missing edits.
 
@@ -140,6 +147,8 @@ powershell -ExecutionPolicy Bypass -File .\revert_cline_limits.ps1
   never enough by itself: the installed SHA-256 must also be listed as a trusted prior patch.
 - **Background commands can now run much longer.** A genuinely stuck `backgroundExec`
   command may occupy the tool call for up to one hour unless the task is cancelled.
+- **The optional loop-control profile greatly raises Cline's retry/loop thresholds.** Enable it
+  only when that behavior is intentional; the standard profile keeps the upstream 3/5/6 guards.
 - **Only the installed bundle is touched.** No source build, no signing, no marketplace
   publication. VS Code does not verify the contents of an unpacked extension, so reloading
   the window after patching is enough.
@@ -169,7 +178,7 @@ tools/cline-limits-tool.mjs      detect / verify / render-docs / notes (Node, no
 ## Русская справка (кратко)
 
 Патч поднимает жёстко зашитые лимиты обрезки в установленном расширении Cline
-**4.1.21**: вывод команд и поиска 48k → 200k символов, чтение файлов 48k → 200k
+**4.1.22**: вывод команд и поиска 48k → 200k символов, чтение файлов 48k → 200k
 (строки 2k → 20k, длина строки 2k → 20k), вложенные файлы 400 КБ → 4 МБ,
 `fetch_web_content` 50k → 200k, лимит редактора 6k → 100k, главный виновник
 маркеров `...[truncated]...` (8k) → 300k. Дополнительно оба 30-секундных таймаута
