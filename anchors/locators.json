@@ -269,6 +269,54 @@
       ]
     },
     {
+      "key": "loop_detection_soft_threshold",
+      "area": "repeated identical tool-call soft threshold",
+      "kind": "literal",
+      "group": "safety-unlock",
+      "optional": true,
+      "target": 1000000,
+      "notes": "Optional safety-unlock. Stable property name; raises the default soft warning threshold from 3 to a practically unreachable value.",
+      "steps": [
+        {
+          "type": "capture",
+          "pattern": "softThreshold:([0-9]+(?:\\.[0-9]+)?e[0-9]+|[0-9]+)",
+          "valueGroup": 1
+        }
+      ]
+    },
+    {
+      "key": "loop_detection_hard_threshold",
+      "area": "repeated identical tool-call hard-stop threshold",
+      "kind": "literal",
+      "group": "safety-unlock",
+      "optional": true,
+      "target": 1000000,
+      "notes": "Optional safety-unlock. This is the hard stop that currently fires after 5 identical tool calls.",
+      "steps": [
+        {
+          "type": "capture",
+          "pattern": "hardThreshold:([0-9]+(?:\\.[0-9]+)?e[0-9]+|[0-9]+)",
+          "valueGroup": 1
+        }
+      ]
+    },
+    {
+      "key": "max_consecutive_mistakes",
+      "area": "consecutive mistake hard-stop threshold",
+      "kind": "literal",
+      "group": "safety-unlock",
+      "optional": true,
+      "target": 1000000,
+      "notes": "Optional safety-unlock. Stable maxConsecutiveMistakes fallback; hard loop detection force-jumps this counter to its configured limit.",
+      "steps": [
+        {
+          "type": "capture",
+          "pattern": "maxConsecutiveMistakes\\?\\?([0-9]+(?:\\.[0-9]+)?e[0-9]+|[0-9]+)",
+          "valueGroup": 1
+        }
+      ]
+    },
+    {
       "key": "sdk_tool_budgets",
       "area": "sdk tool budgets (shell tail buffer, grep budget, read bytes, line guard, glob, traversal)",
       "kind": "block-signature",
