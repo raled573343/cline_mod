@@ -83,22 +83,29 @@ content limit).
 ## 5. Current automated refresh — Cline 4.1.22
 
 The latest supported build was re-derived on 2026-10-04 from the official `v4.1.22`
-VSIX after adding the two command-timeout locator rules.
+VSIX after adding the command-timeout and optional loop-control locator rules.
 
-- locator result: **17/17 AUTO**
-- exact edits: **23**
+- locator result: **20/20 AUTO**
+- standard edits: **23**
+- optional loop-control edits: **3**
 - clean bundle SHA-256: `369bfc6bd01de72d26013ed6ebac2c7c9cb5a564bb8ff14679d6a1ba2ab76178`
-- patched bundle SHA-256: `8e6c5ededaec988a89783af4f3c2030f7f0cb3ffbd6563b8511cca68f58c14a2`
+- standard profile SHA-256: `8e6c5ededaec988a89783af4f3c2030f7f0cb3ffbd6563b8511cca68f58c14a2`
+- standard + optional profile SHA-256: `df07a61548097a4a9ef5006e140492a4fbb48efdf75512726a7a20265d67f1fe`
 - apply check: **PASS**
-- syntax check: **PASS**
-- added timeout edits:
+- syntax check: **PASS** for both profiles
+- timeout edits:
   - `bashTimeoutMs??3e4` -> `bashTimeoutMs??3600000`
   - `timeoutMs:r=3e4,env:i={},combineOutput:a=!0` ->
     `timeoutMs:r=3600000,env:i={},combineOutput:a=!0`
+- optional loop-control edits:
+  - `softThreshold:3` -> `softThreshold:1000000`
+  - `hardThreshold:5` -> `hardThreshold:1000000`
+  - `maxConsecutiveMistakes??6` -> `maxConsecutiveMistakes??1000000`
 
-These two edits are intentionally paired: the outer shell-tool deadline and the inner
+The timeout edits are intentionally paired: the outer shell-tool deadline and the inner
 background child-process executor both default to 30 seconds. Raising only one would leave
-the other as the effective failure point.
+the other as the effective failure point. The three loop-control edits are separately tagged
+as optional and are not selected by ordinary `-Apply`.
 
 ## 6. Date of patch
 
