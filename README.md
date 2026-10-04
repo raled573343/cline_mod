@@ -105,6 +105,8 @@ Optional non-interactive modes:
 .\patch_cline_limits.ps1 -Apply
 ```
 
+If an older cline_mod patch for the same Cline build is already installed, a newer patcher may report `UPGRADE_READY`. That status is accepted only when the current bundle SHA-256 is explicitly recorded as a trusted previous patched hash and every anchor is either already patched or ready; the patcher then applies only the missing edits.
+
 After a successful patch, run **Developer: Reload Window** in VS Code.
 
 The release patcher is self-contained: it does not need `anchors.json`, a repository checkout, network access, `-ExpectedVersion`, `-AnchorsPath`, or `-Force`.
@@ -134,6 +136,8 @@ powershell -ExecutionPolicy Bypass -File .\revert_cline_limits.ps1
   ~100 000 instead of 200 000.
 - **Extension auto-update overwrites the patch.** Disable auto-update for Cline, or re-run
   `-Apply` after an update (re-verify the new build with `-Report` first).
+- **Same-version patch upgrades are hash-gated.** A mixed `READY/ALREADY_PATCHED` state is
+  never enough by itself: the installed SHA-256 must also be listed as a trusted prior patch.
 - **Background commands can now run much longer.** A genuinely stuck `backgroundExec`
   command may occupy the tool call for up to one hour unless the task is cancelled.
 - **Only the installed bundle is touched.** No source build, no signing, no marketplace

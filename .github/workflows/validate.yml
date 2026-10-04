@@ -56,6 +56,53 @@ jobs:
           }
           if ($failed) { exit 1 }
 
+      - name: Patcher upgrades a trusted previous patch in place
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path ([IO.Path]::GetTempPath()) ('cline-mod-upgrade-' + [guid]::NewGuid().ToString('N'))
+          $repoRoot = Join-Path $root 'repo'
+          $extRoot = Join-Path $root 'extension'
+          New-Item -ItemType Directory -Force -Path (Join-Path $repoRoot 'anchors'), (Join-Path $repoRoot 'scripts'), (Join-Path $extRoot 'dist') | Out-Null
+          Copy-Item scripts/patch_cline_limits.ps1 (Join-Path $repoRoot 'scripts/patch_cline_limits.ps1')
+
+          $clean = 'const a=1;const b=2;'
+          $legacy = 'const a=10;const b=2;'
+          $final = 'const a=10;const b=20;'
+          function Get-TextSha([string]$Text) {
+            $bytes = [Text.Encoding]::UTF8.GetBytes($Text)
+            $sha = [Security.Cryptography.SHA256]::Create()
+            try { return ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '').ToLower() }
+            finally { $sha.Dispose() }
+          }
+          $catalog = @{
+            schema = 'cline-mod-anchors-v1'
+            versions = @{
+              '9.9.9' = @{
+                status = 'AUTO'
+                bundleSha256Before = (Get-TextSha $clean)
+                bundleSha256After = (Get-TextSha $final)
+                acceptedSourceHashes = @((Get-TextSha $legacy))
+                edits = @(
+                  @{ old = 'a=1'; new = 'a=10' },
+                  @{ old = 'b=2'; new = 'b=20' }
+                )
+              }
+            }
+          }
+          $catalog | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $repoRoot 'anchors/anchors.json') -Encoding utf8
+          node tools/cline-limits-tool.mjs standalone --version 9.9.9 --output (Join-Path $root 'patch.ps1') --repo-root $repoRoot
+          '{"version":"9.9.9"}' | Set-Content -LiteralPath (Join-Path $extRoot 'package.json') -Encoding utf8
+          [IO.File]::WriteAllText((Join-Path $extRoot 'dist/extension.js'), $legacy, (New-Object Text.UTF8Encoding($false)))
+
+          $report = & (Join-Path $root 'patch.ps1') -Report -ExtensionRoot $extRoot 2>&1 | Out-String
+          Write-Host $report
+          if ($report -notmatch 'Status: UPGRADE_READY') { throw 'expected UPGRADE_READY for trusted legacy hash' }
+          & (Join-Path $root 'patch.ps1') -Apply -ExtensionRoot $extRoot -BackupRoot (Join-Path $root 'backup')
+          $actual = (Get-FileHash -LiteralPath (Join-Path $extRoot 'dist/extension.js') -Algorithm SHA256).Hash.ToLower()
+          if ($actual -ne (Get-TextSha $final)) { throw "upgrade final SHA mismatch: $actual" }
+          Write-Host 'trusted in-place upgrade OK'
+
       - name: Patcher fails clearly without a bundle
         shell: pwsh
         run: |

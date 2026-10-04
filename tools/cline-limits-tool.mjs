@@ -309,6 +309,30 @@ function cmdDetect(args, repoRoot) {
 	const anchorsPath = path.join(repoRoot, ANCHORS_FILE);
 	const anchors = readJson(anchorsPath);
 	anchors.versions = anchors.versions ?? {};
+	const previousEntry = anchors.versions[version];
+	const sameCleanBundle = previousEntry?.bundleSha256Before === report.bundleSha256Before;
+	const acceptedSourceHashes = new Set(
+		sameCleanBundle && Array.isArray(previousEntry?.acceptedSourceHashes)
+			? previousEntry.acceptedSourceHashes
+			: [],
+	);
+	if (
+		sameCleanBundle &&
+		["AUTO", "VERIFIED"].includes(previousEntry?.status) &&
+		previousEntry?.bundleSha256After &&
+		previousEntry.bundleSha256After !== report.bundleSha256After
+	) {
+		acceptedSourceHashes.add(previousEntry.bundleSha256After);
+	}
+	acceptedSourceHashes.delete(report.bundleSha256Before);
+	acceptedSourceHashes.delete(report.bundleSha256After);
+	const normalizedAcceptedSourceHashes = [...acceptedSourceHashes]
+		.map((hash) => String(hash).toLowerCase())
+		.filter((hash) => /^[0-9a-f]{64}$/.test(hash))
+		.sort();
+	if (normalizedAcceptedSourceHashes.length > 0) {
+		report.acceptedSourceHashes = normalizedAcceptedSourceHashes;
+	}
 	anchors.versions[version] = {
 		status: report.status,
 		method: "detected",
@@ -320,6 +344,9 @@ function cmdDetect(args, repoRoot) {
 		bundleSha256After: report.bundleSha256After,
 		applyCheck: report.applyCheck,
 		syntaxCheck: report.syntaxCheck,
+		...(normalizedAcceptedSourceHashes.length > 0
+			? { acceptedSourceHashes: normalizedAcceptedSourceHashes }
+			: {}),
 		edits: report.edits,
 	};
 	anchors.updatedAt = report.detectedAt;
@@ -498,6 +525,16 @@ function cmdNotes(args, repoRoot) {
 			"",
 			"- background/default `run_commands`: **30 seconds -> 1 hour** at both the shell-tool wrapper and child-process executor layers",
 			"- VS Code foreground terminal already uses a 1-hour timeout upstream and is left unchanged",
+			"",
+		);
+	}
+	const upgradeHashes = entry?.acceptedSourceHashes ?? [];
+	if (upgradeHashes.length > 0) {
+		lines.push(
+			"## In-place upgrade",
+			"",
+			`This patcher recognizes **${upgradeHashes.length} trusted previous patched bundle hash(es)** for Cline \`${version}\`.`,
+			"If an older cline_mod patch is already installed, it verifies that hash plus every anchor state, applies only the missing edits, and still requires the final canonical patched SHA-256.",
 			"",
 		);
 	}

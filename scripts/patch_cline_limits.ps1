@@ -244,6 +244,9 @@ $script:EmbeddedAnchorsJson = @'
           "old": "tWc=5e4",
           "new": "tWc=200000"
         }
+      ],
+      "acceptedSourceHashes": [
+        "804f1902e95904934e64f9b43386aac8fc4c080d391ac36eee6a7a95b02f873e"
       ]
     }
   }
@@ -375,10 +378,17 @@ $bundleFile = Get-Item -LiteralPath $bundlePath
 $beforeHash = (Get-FileHash -LiteralPath $bundlePath -Algorithm SHA256).Hash.ToLower()
 $expectedBefore = ([string]$entry.bundleSha256Before).ToLower()
 $expectedAfter = ([string]$entry.bundleSha256After).ToLower()
+$acceptedSourceHashes = @()
+if ($entry.PSObject.Properties.Name -contains 'acceptedSourceHashes') {
+    $acceptedSourceHashes = @($entry.acceptedSourceHashes | ForEach-Object { ([string]$_).ToLower() })
+}
 
 Write-Host ('  bundle    : {0} bytes' -f $bundleFile.Length)
 Write-Host ('  sha256    : {0}' -f $beforeHash)
 Write-Host ('  expected  : {0}' -f $expectedBefore)
+if ($acceptedSourceHashes.Count -gt 0) {
+    Write-Host ('  upgrades  : {0}' -f ($acceptedSourceHashes -join ', '))
+}
 Write-Host ''
 
 $text = [IO.File]::ReadAllText($bundlePath)
@@ -401,20 +411,35 @@ $patchedCount = @($states | Where-Object { $_.Status -eq 'ALREADY_PATCHED' }).Co
 $bad = @($states | Where-Object { $_.Status -ne 'READY' -and $_.Status -ne 'ALREADY_PATCHED' })
 
 $status = 'UNUSABLE'
+$knownUpgradeHash = ($acceptedSourceHashes -contains $beforeHash)
+$allStatesKnown = ($bad.Count -eq 0 -and ($readyCount + $patchedCount) -eq $edits.Count)
 if ($beforeHash -eq $expectedAfter -and $patchedCount -eq $edits.Count) {
     $status = 'ALREADY_PATCHED'
-} elseif ($beforeHash -ne $expectedBefore) {
-    $status = 'HASH_MISMATCH'
-} elseif ($bad.Count -gt 0 -or $readyCount -ne $edits.Count) {
-    $status = 'UNUSABLE'
+} elseif ($beforeHash -eq $expectedBefore) {
+    if ($bad.Count -gt 0 -or $readyCount -ne $edits.Count) {
+        $status = 'UNUSABLE'
+    } else {
+        $status = 'READY'
+    }
+} elseif ($knownUpgradeHash) {
+    if (-not $allStatesKnown -or $readyCount -eq 0) {
+        $status = 'UNUSABLE'
+    } else {
+        $status = 'UPGRADE_READY'
+    }
 } else {
-    $status = 'READY'
+    $status = 'HASH_MISMATCH'
 }
 
 switch ($status) {
     'READY' {
         Show-Status -Status 'READY' -Color Green
         Write-Host ('All {0} edits are ready and the clean bundle hash matches.' -f $edits.Count)
+    }
+    'UPGRADE_READY' {
+        Show-Status -Status 'UPGRADE_READY' -Color Green
+        Write-Host ('Recognized a trusted previous patched bundle. {0} edit(s) already applied; {1} new edit(s) are ready.' -f $patchedCount, $readyCount)
+        Write-Host 'The patcher can upgrade it in place to the current recorded patched SHA-256.'
     }
     'ALREADY_PATCHED' {
         Show-Status -Status 'ALREADY_PATCHED' -Color Yellow
@@ -437,7 +462,7 @@ switch ($status) {
 
 if ($Report) { return }
 if ($status -eq 'ALREADY_PATCHED') { return }
-if ($status -ne 'READY') {
+if ($status -ne 'READY' -and $status -ne 'UPGRADE_READY') {
     if ($Apply) { throw "Refusing to patch because status is $status." }
     return
 }
@@ -459,8 +484,11 @@ if ($bundleFile.IsReadOnly) {
 }
 
 $patched = $text
-foreach ($edit in $edits) {
-    $patched = $patched.Replace([string]$edit.old, [string]$edit.new)
+for ($i = 0; $i -lt $edits.Count; $i += 1) {
+    if ($states[$i].Status -eq 'READY') {
+        $edit = $edits[$i]
+        $patched = $patched.Replace([string]$edit.old, [string]$edit.new)
+    }
 }
 
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
@@ -496,6 +524,8 @@ $record = [pscustomobject]@{
     bundleSha256After = $afterHash
     nodeExe = (Get-NodeExe)
     embeddedCatalogSchema = $catalog.schema
+    sourceStatus = $status
+    appliedEditsCount = $readyCount
     edits = @($edits)
 }
 $record | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $backup 'patch-manifest.json') -Encoding UTF8

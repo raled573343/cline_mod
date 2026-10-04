@@ -85,6 +85,10 @@ the evidence captured from the new build. To fix it:
 
 - Anchors are applied only when each `old` string is unique in the bundle; otherwise the
   patcher refuses to write.
+- When a locator refresh changes the canonical patched SHA for the same clean upstream bundle,
+  the previous canonical patched SHA is retained in `acceptedSourceHashes`. This enables a
+  fail-closed in-place upgrade: the hash must be trusted, all anchors must be `READY` or
+  `ALREADY_PATCHED`, and only `READY` edits are applied.
 - The patched text is validated with `node --check` **before** the live bundle is replaced.
 - Every patch creates a timestamped backup (`extension.js`, `package.json`,
   `patch-manifest.json` with before/after hashes) and `revert_cline_limits.ps1` restores it.
