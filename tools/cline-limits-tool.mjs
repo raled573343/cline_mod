@@ -409,15 +409,23 @@ function cmdVerify(args, repoRoot) {
 	if (!entry) throw new Error(`verify: version ${version} is not recorded in ${ANCHORS_FILE}`);
 
 	const before = detectGeometry(bundleBuffer);
-	const applied = applyEdits(bundleBuffer.toString("utf8"), entry.edits ?? []);
+	const profileName = typeof args.profile === "string" ? args.profile : "standard";
+	const profile = entry.profiles?.[profileName] ?? (profileName === "standard"
+		? { groups: ["base"], bundleSha256After: entry.bundleSha256After }
+		: null);
+	if (!profile) throw new Error(`verify: unknown profile ${profileName} for version ${version}`);
+	const groups = profile.groups ?? ["base"];
+	const selectedEdits = (entry.edits ?? []).filter((edit) => groups.includes(edit.group ?? "base"));
+	const applied = applyEdits(bundleBuffer.toString("utf8"), selectedEdits);
 	const syntax = applied.ok ? nodeCheck(applied.text) : { ok: false, reason: applied.reason };
 	const after = applied.ok ? detectGeometry(Buffer.from(applied.text, "utf8")) : { bundleSha256: null };
 
 	const hashOk = entry.bundleSha256Before ? entry.bundleSha256Before === before.bundleSha256 : null;
-	const patchedOk = entry.bundleSha256After ? entry.bundleSha256After === after.bundleSha256 : null;
+	const expectedAfter = profile.bundleSha256After ?? entry.bundleSha256After;
+	const patchedOk = expectedAfter ? expectedAfter === after.bundleSha256 : null;
 
 	process.stdout.write(
-		`${version}: hash=${hashOk === null ? "unrecorded" : hashOk} patchedHash=${patchedOk === null ? "unrecorded" : patchedOk} ` +
+		`${version} [${profileName}]: hash=${hashOk === null ? "unrecorded" : hashOk} patchedHash=${patchedOk === null ? "unrecorded" : patchedOk} ` +
 			`syntax=${syntax.ok ? "PASS" : `FAIL: ${syntax.reason}`}\n`,
 	);
 	return applied.ok && syntax.ok && hashOk !== false ? 0 : 6;
@@ -435,14 +443,16 @@ function cmdRenderDocs(args, repoRoot) {
 		"Generated from [`anchors/anchors.json`](../anchors/anchors.json). Run",
 		"`node tools/cline-limits-tool.mjs render-docs` after the anchors change.",
 		"",
-		"| Cline version | Anchors | Status | Bundle SHA-256 (before) | Patched SHA-256 | Edits | Detected |",
-		"|---|---|---|---|---|---:|---|",
+		"| Cline version | Anchors | Status | Bundle SHA-256 (before) | Standard SHA-256 | Base edits | Optional edits | Detected |",
+		"|---|---|---|---|---|---:|---:|---|",
 	];
 	for (const [version, entry] of versions) {
+		const allEdits = entry.edits ?? [];
+		const optionalEdits = allEdits.filter((edit) => edit.optional === true).length;
 		lines.push(
 			`| \`${version}\` | ${entry.status === "VERIFIED" ? "manual" : "auto-detected"} | ${entry.status} | ` +
 				`\`${short(entry.bundleSha256Before ?? "unknown", 16)}\` | \`${short(entry.bundleSha256After ?? "unknown", 16)}\` | ` +
-				`${(entry.edits ?? []).length} | ${entry.detectedAt ?? "unknown"} |`,
+				`${allEdits.length - optionalEdits} | ${optionalEdits} | ${entry.detectedAt ?? "unknown"} |`,
 		);
 	}
 	lines.push(
@@ -505,7 +515,10 @@ function cmdNotes(args, repoRoot) {
 	if (!entry && !fs.existsSync(reportPath)) throw new Error(`notes: no anchors or report for ${version}`);
 	const report = fs.existsSync(reportPath) ? readJson(reportPath) : null;
 
-	const editCount = (entry?.edits ?? report?.edits ?? []).length;
+	const allEdits = entry?.edits ?? report?.edits ?? [];
+	const editCount = allEdits.length;
+	const optionalEditCount = allEdits.filter((edit) => edit.optional === true).length;
+	const standardEditCount = editCount - optionalEditCount;
 	const rules = report?.rules ?? [];
 	const auto = rules.filter((r) => r.status === "AUTO").length;
 	const review = rules.filter((r) => r.status !== "AUTO");
@@ -514,13 +527,16 @@ function cmdNotes(args, repoRoot) {
 		`# Patch for Cline ${version}`,
 		"",
 		`Auto-detected anchor updates for Cline \`${version}\`: **${auto}/${rules.length || "?"} locator rules resolved**, ` +
-			`**${editCount} edits**, apply check \`${entry?.applyCheck ?? report?.applyCheck ?? "n/a"}\`, ` +
+			`**${standardEditCount} standard edits + ${optionalEditCount} optional edits**, apply check \`${entry?.applyCheck ?? report?.applyCheck ?? "n/a"}\`, ` +
 			`syntax check \`${entry?.syntaxCheck ?? report?.syntaxCheck ?? "n/a"}\`.`,
 		"",
 		"| Bundle SHA-256 | Value |",
 		"|---|---|",
 		`| before patch | \`${entry?.bundleSha256Before ?? report?.bundleSha256Before ?? "unknown"}\` |`,
-		`| after patch | \`${entry?.bundleSha256After ?? report?.bundleSha256After ?? "unknown"}\` |`,
+		`| standard patch | \`${entry?.bundleSha256After ?? report?.bundleSha256After ?? "unknown"}\` |`,
+...(entry?.profiles?.["safety-unlock"]?.bundleSha256After || report?.profiles?.["safety-unlock"]?.bundleSha256After
+	? [`| standard + safety-unlock | \`${entry?.profiles?.["safety-unlock"]?.bundleSha256After ?? report?.profiles?.["safety-unlock"]?.bundleSha256After}\` |`]
+	: []),
 		"",
 		"## Downloads in this release",
 		"",
@@ -547,6 +563,7 @@ function cmdNotes(args, repoRoot) {
 		"```",
 		"",
 		"Optional non-interactive modes: `.\\patch_cline_limits.ps1 -Report` and `.\\patch_cline_limits.ps1 -Apply`.",
+		"Add `-SafetyUnlock` to select the optional safety-unlock profile non-interactively.",
 		"After patching: VS Code -> Command Palette -> \"Developer: Reload Window\".",
 		"",
 	];
@@ -560,6 +577,19 @@ function cmdNotes(args, repoRoot) {
 			"",
 			"- background/default `run_commands`: **30 seconds -> 1 hour** at both the shell-tool wrapper and child-process executor layers",
 			"- VS Code foreground terminal already uses a 1-hour timeout upstream and is left unchanged",
+			"",
+		);
+	}
+	const safetyProfile = entry?.profiles?.["safety-unlock"] ?? report?.profiles?.["safety-unlock"];
+	if (safetyProfile) {
+		lines.push(
+			"## Optional safety-unlock profile",
+			"",
+			"- repeated identical tool-call soft threshold: **3 -> 1,000,000**",
+			"- repeated identical tool-call hard stop: **5 -> 1,000,000**",
+			"- consecutive mistake stop: **6 -> 1,000,000**",
+			"- disabled by default; enable interactively or pass `-SafetyUnlock`",
+			"- this is intentionally an opt-in guardrail reduction and can let a broken agent loop for a very long time",
 			"",
 		);
 	}
@@ -619,7 +649,7 @@ function main() {
 				process.stderr.write(
 					"usage: cline-limits-tool.mjs <detect|verify|render-docs|standalone|notes> [options]\n" +
 						"  detect --bundle <extension.js> --version <x.y.z> [--dry-run] [--repo-root <dir>]\n" +
-						"  verify --bundle <extension.js> --version <x.y.z> [--repo-root <dir>]\n" +
+						"  verify --bundle <extension.js> --version <x.y.z> [--profile <standard|safety-unlock>] [--repo-root <dir>]\n" +
 						"  render-docs [--repo-root <dir>]\n" +
 						"  standalone --version <x.y.z> --output <file> [--repo-root <dir>]\n" +
 						"  notes --version <x.y.z> [--repo-root <dir>]\n",
