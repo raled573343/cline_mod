@@ -17,10 +17,12 @@ describes every limit as a *recipe* built from strings that survive minification
 | truncation notice text | `[Content truncated: showing first`, `[line truncated]`, `search output truncated` | user-visible |
 | frozen value signature | the comma-run `102400,12e4,262144,102400,2e3,200,40,5e4` | matched positionally |
 | stable timeout property/shape | `bashTimeoutMs??<literal>` and the `timeoutMs/env/combineOutput` destructuring sequence | survives minification while local symbols change |
+| loop-control property names | numeric literals on `softThreshold`, `hardThreshold`, `maxConsecutiveMistakes??` | SDK property names survive minification |
 
 `node tools/cline-limits-tool.mjs detect` resolves each recipe, builds the `old → new`
-edit pair, applies all edits to an in-memory copy, requires every `old` to occur exactly
-once, and finally runs `node --check` on the result. Only then are the anchors recorded.
+edit pair and requires every `old` to occur exactly once. It then constructs each published
+profile in memory and runs `node --check` on each result. The `standard` profile excludes
+optional edits; `safety-unlock` adds the three loop-control edits. Only then are the anchors recorded.
 
 ## Pipeline
 
@@ -34,7 +36,7 @@ resolve latest cline/cline release  ->  skip if already in anchors/anchors.json
 download cline-<version>.vsix  ->  extract extension/dist/extension.js  ->  sha256
         |
         v
-node tools/cline-limits-tool.mjs detect   (17 locator rules, uniqueness + node --check)
+node tools/cline-limits-tool.mjs detect   (20 locator rules, uniqueness + node --check per profile)
         |
         +--> status AUTO    -> commit anchors + docs, publish release patch-v<version> as LATEST
         |
@@ -89,7 +91,10 @@ the evidence captured from the new build. To fix it:
   the previous canonical patched SHA is retained in `acceptedSourceHashes`. This enables a
   fail-closed in-place upgrade: the hash must be trusted, all anchors must be `READY` or
   `ALREADY_PATCHED`, and only `READY` edits are applied.
-- The patched text is validated with `node --check` **before** the live bundle is replaced.
+- Every generated profile is validated with `node --check`, and the installer validates the
+  selected staged bundle again before replacing the live extension.
+- Optional edits have a separate recorded SHA-256. `-Apply` selects only the standard profile;
+  `-SafetyUnlock` or the explicit interactive choice is required to select the optional profile.
 - Every patch creates a timestamped backup (`extension.js`, `package.json`,
   `patch-manifest.json` with before/after hashes) and `revert_cline_limits.ps1` restores it.
 - `-Report` never writes; `-Apply` re-verifies the recorded pre-patch SHA-256 and warns when
