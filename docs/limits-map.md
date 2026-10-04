@@ -104,7 +104,29 @@ The existing `Zfo=120000` entry in the lazily loaded SDK budget block is a separ
 timeout constant and does not replace either of the two 30-second `run_commands`
 deadlines above.
 
-## 6. Deliberately not changed
+## 6. Optional loop-control profile
+
+Cline 4.1.22 contains two related runtime guards:
+
+| Guard | Upstream | Optional profile | Exact minified anchor |
+|---|---:|---:|---|
+| repeated identical-call soft warning | 3 | 1 000 000 | `softThreshold:3` |
+| repeated identical-call hard stop | 5 | 1 000 000 | `hardThreshold:5` |
+| consecutive mistake stop | 6 | 1 000 000 | `maxConsecutiveMistakes??6` |
+
+The repeated-call hard verdict is forwarded to the mistake tracker with
+`forceAtLimit: true`. That is why a fifth identical tool call can surface through the UI
+as “6 errors in a row”: the mistake counter is forced directly to its configured limit.
+
+These three edits are tagged `group=safety-unlock` and `optional=true`. They are excluded
+from the standard profile and have a separate verified output hash:
+
+- standard: `8e6c5ededaec988a89783af4f3c2030f7f0cb3ffbd6563b8511cca68f58c14a2`
+- standard + optional group: `df07a61548097a4a9ef5006e140492a4fbb48efdf75512726a7a20265d67f1fe`
+
+Both variants pass `node --check` in automatic detection.
+
+## 7. Deliberately not changed
 
 | Item | Why |
 |---|---|
@@ -112,7 +134,7 @@ deadlines above.
 | 200-character command preview in the chat UI | display-only, lives in the webview bundle, does not affect executed output |
 | model catalog `contextWindow` / `maxTokens` entries | not truncation limits; raise them per-provider in Cline's own settings UI (custom-model overrides) instead |
 
-## 7. Reproducing this map
+## 8. Reproducing this map
 
 ```powershell
 $f = "$env:USERPROFILE\.vscode\extensions\saoudrizwan.claude-dev-4.1.21\dist\extension.js"
