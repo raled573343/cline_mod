@@ -84,8 +84,8 @@ jobs:
                 bundleSha256After = (Get-TextSha $final)
                 acceptedSourceHashes = @((Get-TextSha $legacy))
                 edits = @(
-                  @{ old = 'a=1'; new = 'a=10' },
-                  @{ old = 'b=2'; new = 'b=20' }
+                  @{ old = 'a=1;'; new = 'a=10;' },
+                  @{ old = 'b=2;'; new = 'b=20;' }
                 )
               }
             }
