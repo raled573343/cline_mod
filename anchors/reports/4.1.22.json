@@ -1,14 +1,14 @@
 {
   "version": "4.1.22",
   "upstreamTag": "v4.1.22",
-  "detectedAt": "2026-09-30T11:09:53.648Z",
+  "detectedAt": "2026-10-04T03:43:23.627Z",
   "status": "AUTO",
-  "ruleCount": 15,
-  "autoCount": 15,
+  "ruleCount": 17,
+  "autoCount": 17,
   "bundleBytesBefore": 25719093,
   "bundleSha256Before": "369bfc6bd01de72d26013ed6ebac2c7c9cb5a564bb8ff14679d6a1ba2ab76178",
-  "bundleBytesAfter": 25719133,
-  "bundleSha256After": "804f1902e95904934e64f9b43386aac8fc4c080d391ac36eee6a7a95b02f873e",
+  "bundleBytesAfter": 25719141,
+  "bundleSha256After": "8e6c5ededaec988a89783af4f3c2030f7f0cb3ffbd6563b8511cca68f58c14a2",
   "applyCheck": "PASS",
   "syntaxCheck": "PASS",
   "rules": [
@@ -139,6 +139,24 @@
       "evidence": "AAp=12e3"
     },
     {
+      "key": "bash_tool_timeout",
+      "area": "run_commands wrapper timeout",
+      "kind": "literal",
+      "target": 3600000,
+      "status": "AUTO",
+      "reason": "literal 3e4 -> 3600000",
+      "evidence": "bashTimeoutMs??3e4"
+    },
+    {
+      "key": "background_shell_timeout",
+      "area": "backgroundExec child-process timeout",
+      "kind": "literal",
+      "target": 3600000,
+      "status": "AUTO",
+      "reason": "literal 3e4 -> 3600000",
+      "evidence": "timeoutMs:r=3e4,env:i={},combineOutput:a=!0"
+    },
+    {
       "key": "sdk_tool_budgets",
       "area": "sdk tool budgets (shell tail buffer, grep budget, read bytes, line guard, glob, traversal)",
       "kind": "block-signature",
@@ -204,6 +222,14 @@
     {
       "old": "AAp=12e3",
       "new": "AAp=100000"
+    },
+    {
+      "old": "bashTimeoutMs??3e4",
+      "new": "bashTimeoutMs??3600000"
+    },
+    {
+      "old": "timeoutMs:r=3e4,env:i={},combineOutput:a=!0",
+      "new": "timeoutMs:r=3600000,env:i={},combineOutput:a=!0"
     },
     {
       "old": "tVa=102400,",
