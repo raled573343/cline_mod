@@ -250,6 +250,23 @@ function detectGeometry(buf) {
 	};
 }
 
+function buildPatchProfile(bundle, edits, groups) {
+	const selected = edits.filter((edit) => groups.includes(edit.group ?? "base"));
+	const applied = applyEdits(bundle, selected);
+	const syntax = applied.ok ? nodeCheck(applied.text) : { ok: false, reason: applied.reason };
+	const after = applied.ok
+		? detectGeometry(Buffer.from(applied.text, "utf8"))
+		: { bundleBytes: null, bundleSha256: null };
+	return {
+		groups,
+		editCount: selected.length,
+		bundleBytesAfter: after.bundleBytes,
+		bundleSha256After: after.bundleSha256,
+		applyCheck: applied.ok ? "PASS" : `FAIL: ${applied.reason}`,
+		syntaxCheck: syntax.ok ? "PASS" : `FAIL: ${syntax.reason}`,
+	};
+}
+
 function cmdDetect(args, repoRoot) {
 	const version = args.version;
 	const bundlePath = args.bundle;
@@ -267,36 +284,53 @@ function cmdDetect(args, repoRoot) {
 	for (const rule of rules) {
 		const scratch = { ...rule };
 		const resolved = resolveRule(scratch, bundle);
+		const group = rule.group ?? "base";
+		const optional = rule.optional === true;
 		results.push({
 			key: rule.key,
 			area: rule.area,
 			kind: rule.kind,
+			group,
+			optional,
 			target: rule.target ?? null,
 			status: resolved.status,
 			reason: resolved.reason,
 			evidence: resolved.evidence,
 		});
-		if (resolved.status === "AUTO" && Array.isArray(resolved.edits)) edits.push(...resolved.edits);
+		if (resolved.status === "AUTO" && Array.isArray(resolved.edits)) {
+			edits.push(...resolved.edits.map((edit) => ({ ...edit, group, optional })));
+		}
 	}
 
 	const review = results.filter((r) => r.status !== "AUTO");
-	const applied = applyEdits(bundle, edits);
-	const syntax = applied.ok ? nodeCheck(applied.text) : { ok: false, reason: applied.reason };
-	const after = applied.ok ? detectGeometry(Buffer.from(applied.text, "utf8")) : { bundleBytes: null, bundleSha256: null };
+	const optionalGroups = [...new Set(edits.filter((edit) => edit.optional).map((edit) => edit.group))].sort();
+	const standardProfile = buildPatchProfile(bundle, edits, ["base"]);
+	const safetyProfile = optionalGroups.includes("safety-unlock")
+		? buildPatchProfile(bundle, edits, ["base", "safety-unlock"])
+		: null;
+	const profiles = {
+		standard: standardProfile,
+		...(safetyProfile ? { "safety-unlock": safetyProfile } : {}),
+	};
+	const profilesOk = Object.values(profiles).every(
+		(profile) => profile.applyCheck === "PASS" && profile.syntaxCheck === "PASS",
+	);
 
 	const report = {
 		version,
 		upstreamTag: typeof args["upstream-tag"] === "string" ? args["upstream-tag"] : null,
 		detectedAt: new Date().toISOString(),
-		status: review.length === 0 && applied.ok && syntax.ok ? "AUTO" : "REVIEW",
+		status: review.length === 0 && profilesOk ? "AUTO" : "REVIEW",
 		ruleCount: results.length,
 		autoCount: results.length - review.length,
 		bundleBytesBefore: before.bundleBytes,
 		bundleSha256Before: before.bundleSha256,
-		bundleBytesAfter: after.bundleBytes,
-		bundleSha256After: after.bundleSha256,
-		applyCheck: applied.ok ? "PASS" : `FAIL: ${applied.reason}`,
-		syntaxCheck: syntax.ok ? "PASS" : `FAIL: ${syntax.reason}`,
+		// Backward-compatible canonical fields describe the standard profile only.
+		bundleBytesAfter: standardProfile.bundleBytesAfter,
+		bundleSha256After: standardProfile.bundleSha256After,
+		applyCheck: standardProfile.applyCheck,
+		syntaxCheck: standardProfile.syntaxCheck,
+		profiles,
 		rules: results,
 		edits,
 	};
@@ -344,6 +378,7 @@ function cmdDetect(args, repoRoot) {
 		bundleSha256After: report.bundleSha256After,
 		applyCheck: report.applyCheck,
 		syntaxCheck: report.syntaxCheck,
+		profiles: report.profiles,
 		...(normalizedAcceptedSourceHashes.length > 0
 			? { acceptedSourceHashes: normalizedAcceptedSourceHashes }
 			: {}),
