@@ -103,6 +103,62 @@ jobs:
           if ($actual -ne (Get-TextSha $final)) { throw "upgrade final SHA mismatch: $actual" }
           Write-Host 'trusted in-place upgrade OK'
 
+      - name: Optional safety profile stays opt-in and hash-gated
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path ([IO.Path]::GetTempPath()) ('cline-mod-profile-' + [guid]::NewGuid().ToString('N'))
+          $repoRoot = Join-Path $root 'repo'
+          $extRoot = Join-Path $root 'extension'
+          New-Item -ItemType Directory -Force -Path (Join-Path $repoRoot 'anchors'), (Join-Path $repoRoot 'scripts'), (Join-Path $extRoot 'dist') | Out-Null
+          Copy-Item scripts/patch_cline_limits.ps1 (Join-Path $repoRoot 'scripts/patch_cline_limits.ps1')
+
+          $clean = 'const base=1;const guard=3;'
+          $standard = 'const base=10;const guard=3;'
+          $unlocked = 'const base=10;const guard=1000000;'
+          function Get-TextSha([string]$Text) {
+            $bytes = [Text.Encoding]::UTF8.GetBytes($Text)
+            $sha = [Security.Cryptography.SHA256]::Create()
+            try { return ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '').ToLower() }
+            finally { $sha.Dispose() }
+          }
+
+          $catalog = @{
+            schema = 'cline-mod-anchors-v1'
+            versions = @{
+              '9.9.8' = @{
+                status = 'AUTO'
+                bundleSha256Before = (Get-TextSha $clean)
+                bundleSha256After = (Get-TextSha $standard)
+                profiles = @{
+                  standard = @{ groups=@('base'); bundleSha256After=(Get-TextSha $standard) }
+                  'safety-unlock' = @{ groups=@('base','safety-unlock'); bundleSha256After=(Get-TextSha $unlocked) }
+                }
+                edits = @(
+                  @{ old='base=1;'; new='base=10;'; group='base'; optional=$false },
+                  @{ old='guard=3;'; new='guard=1000000;'; group='safety-unlock'; optional=$true }
+                )
+              }
+            }
+          }
+          $catalog | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $repoRoot 'anchors/anchors.json') -Encoding utf8
+          node tools/cline-limits-tool.mjs standalone --version 9.9.8 --output (Join-Path $root 'patch.ps1') --repo-root $repoRoot
+          '{"version":"9.9.8"}' | Set-Content -LiteralPath (Join-Path $extRoot 'package.json') -Encoding utf8
+          [IO.File]::WriteAllText((Join-Path $extRoot 'dist/extension.js'), $clean, (New-Object Text.UTF8Encoding($false)))
+
+          & (Join-Path $root 'patch.ps1') -Apply -ExtensionRoot $extRoot -BackupRoot (Join-Path $root 'backup-standard')
+          $actualStandard = (Get-FileHash (Join-Path $extRoot 'dist/extension.js') -Algorithm SHA256).Hash.ToLower()
+          if ($actualStandard -ne (Get-TextSha $standard)) { throw 'standard profile unexpectedly changed optional guard' }
+
+          $report = & (Join-Path $root 'patch.ps1') -Report -SafetyUnlock -ExtensionRoot $extRoot *>&1 | Out-String
+          Write-Host $report
+          if ($report -notmatch 'UPGRADE_READY') { throw 'expected safety-unlock upgrade from standard profile' }
+
+          & (Join-Path $root 'patch.ps1') -Apply -SafetyUnlock -ExtensionRoot $extRoot -BackupRoot (Join-Path $root 'backup-unlocked')
+          $actualUnlocked = (Get-FileHash (Join-Path $extRoot 'dist/extension.js') -Algorithm SHA256).Hash.ToLower()
+          if ($actualUnlocked -ne (Get-TextSha $unlocked)) { throw 'safety-unlock profile final SHA mismatch' }
+          Write-Host 'optional safety profile OK'
+
       - name: Patcher fails clearly without a bundle
         shell: pwsh
         run: |
