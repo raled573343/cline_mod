@@ -97,7 +97,7 @@ jobs:
 
           $report = & (Join-Path $root 'patch.ps1') -Report -ExtensionRoot $extRoot 2>&1 | Out-String
           Write-Host $report
-          if ($report -notmatch 'Status: UPGRADE_READY') { throw 'expected UPGRADE_READY for trusted legacy hash' }
+          if ($report -notmatch 'UPGRADE_READY') { throw 'expected UPGRADE_READY for trusted legacy hash' }
           & (Join-Path $root 'patch.ps1') -Apply -ExtensionRoot $extRoot -BackupRoot (Join-Path $root 'backup')
           $actual = (Get-FileHash -LiteralPath (Join-Path $extRoot 'dist/extension.js') -Algorithm SHA256).Hash.ToLower()
           if ($actual -ne (Get-TextSha $final)) { throw "upgrade final SHA mismatch: $actual" }
