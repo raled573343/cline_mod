@@ -16,6 +16,7 @@ describes every limit as a *recipe* built from strings that survive minification
 | tool-description text | `at most ${<SYM>} lines` | shipped to the model verbatim |
 | truncation notice text | `[Content truncated: showing first`, `[line truncated]`, `search output truncated` | user-visible |
 | frozen value signature | the comma-run `102400,12e4,262144,102400,2e3,200,40,5e4` | matched positionally |
+| stable timeout property/shape | `bashTimeoutMs??<literal>` and the `timeoutMs/env/combineOutput` destructuring sequence | survives minification while local symbols change |
 
 `node tools/cline-limits-tool.mjs detect` resolves each recipe, builds the `old → new`
 edit pair, applies all edits to an in-memory copy, requires every `old` to occur exactly
@@ -33,7 +34,7 @@ resolve latest cline/cline release  ->  skip if already in anchors/anchors.json
 download cline-<version>.vsix  ->  extract extension/dist/extension.js  ->  sha256
         |
         v
-node tools/cline-limits-tool.mjs detect   (15 locator rules, uniqueness + node --check)
+node tools/cline-limits-tool.mjs detect   (17 locator rules, uniqueness + node --check)
         |
         +--> status AUTO    -> commit anchors + docs, publish release patch-v<version> as LATEST
         |
@@ -89,3 +90,6 @@ the evidence captured from the new build. To fix it:
   `patch-manifest.json` with before/after hashes) and `revert_cline_limits.ps1` restores it.
 - `-Report` never writes; `-Apply` re-verifies the recorded pre-patch SHA-256 and warns when
   a same-version rebuild no longer matches it.
+- A change to `anchors/locators.json` automatically re-detects the newest already-supported
+  Cline build. Existing-version refreshes are accepted only when every locator still resolves
+  to `AUTO`; otherwise the workflow fails before overwriting the recorded good anchors.

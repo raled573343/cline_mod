@@ -4,7 +4,7 @@
 
 **Unofficial, local, reversible patch for the Cline VS Code extension that raises the
 hard-coded truncation limits which silently cut tool output, file reads, web fetch
-content and editor payloads.**
+content and editor payloads, and extends the background command timeout.**
 
 Not affiliated with, endorsed by, or supported by Cline. See
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
@@ -41,7 +41,7 @@ new Cline releases are picked up automatically (see [docs/automation.md](docs/au
 
 | Cline version | Bundle SHA-256 (before patch) | Status |
 |---|---|---|
-| `4.1.21` | `0035a6327275fd3f750ae7cbabf944f2d31f6f36f53a37a808eff7b0421e2121` | **AUTO** — 15/15 locator rules, 21 edits, `node --check` PASS |
+| `4.1.22` | `369bfc6bd01de72d26013ed6ebac2c7c9cb5a564bb8ff14679d6a1ba2ab76178` | **AUTO** — 17/17 locator rules, 23 edits, `node --check` PASS |
 
 The patcher takes its edit table from [`anchors/anchors.json`](anchors/anchors.json) for the
 installed version (falling back to a built-in 4.1.21 table). It refuses to touch any anchor
@@ -63,6 +63,7 @@ bundle.
 | 9 | tool-result forwarding cap (the `...[truncated]...` culprit) | 8 000 chars | 300 000 |
 | 10 | assistant text / tool-call markup caps | 200 000 / 12 000 | 400 000 / 100 000 |
 | 11 | SDK tool budgets (grep, shell tail buffer, glob, traversal) | mixed | raised proportionally |
+| 12 | `run_commands` background/default execution timeout (outer wrapper + child-process executor) | 30 s / 30 s | 1 h / 1 h |
 
 Full evidence, exact anchor strings and the byte-context used to locate each constant:
 [docs/limits-map.md](docs/limits-map.md).
@@ -133,6 +134,8 @@ powershell -ExecutionPolicy Bypass -File .\revert_cline_limits.ps1
   ~100 000 instead of 200 000.
 - **Extension auto-update overwrites the patch.** Disable auto-update for Cline, or re-run
   `-Apply` after an update (re-verify the new build with `-Report` first).
+- **Background commands can now run much longer.** A genuinely stuck `backgroundExec`
+  command may occupy the tool call for up to one hour unless the task is cancelled.
 - **Only the installed bundle is touched.** No source build, no signing, no marketplace
   publication. VS Code does not verify the contents of an unpacked extension, so reloading
   the window after patching is enough.
@@ -165,7 +168,8 @@ tools/cline-limits-tool.mjs      detect / verify / render-docs / notes (Node, no
 **4.1.21**: вывод команд и поиска 48k → 200k символов, чтение файлов 48k → 200k
 (строки 2k → 20k, длина строки 2k → 20k), вложенные файлы 400 КБ → 4 МБ,
 `fetch_web_content` 50k → 200k, лимит редактора 6k → 100k, главный виновник
-маркеров `...[truncated]...` (8k) → 300k. Меняются **только числовые константы** —
+маркеров `...[truncated]...` (8k) → 300k. Дополнительно оба 30-секундных таймаута
+`run_commands` для background/default SDK поднимаются до 1 часа. Меняются **только числовые константы** —
 по одной точной строке-якорю на каждое изменение; скрипт сначала снимает бэкап и
 отказывается работать, если якорь не найден ровно один раз.
 

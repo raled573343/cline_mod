@@ -84,7 +84,27 @@ after:   Suo=5e5,   Zfo=12e4,Wad=2e6,   OKe=2e5,   qad=2e4, Gad=2e3,Had=100,zad=
 | `zad` | traversal entry budget | 50 000 | 200 000 | `async function Uad(t,e,r,i){let a=zad…` |
 | `Zfo` | exec timeout (ms, **not** a content limit) | 120 000 | unchanged | `e.exec(i,{timeoutMs:o??Zfo,…})` |
 
-## 5. Deliberately not changed
+## 5. `run_commands` execution timeout
+
+For `backgroundExec`, Cline has **two independent 30-second defaults**. Both must be
+raised; changing only the public `bashTimeoutMs` fallback would simply expose the
+inner child-process executor's own 30-second kill timer.
+
+| Layer | Stable locator / source shape | Before | Patched |
+|---|---|---:|---:|
+| shell-tool wrapper | `config.bashTimeoutMs ?? 30000` / minified `bashTimeoutMs??<literal>` | 30 000 ms | 3 600 000 ms |
+| background child-process executor | destructured `timeoutMs = 30000` next to `env = {}` and `combineOutput = true` | 30 000 ms | 3 600 000 ms |
+
+The VS Code **foreground** terminal path already supplies
+`VSCODE_FOREGROUND_RUN_COMMANDS_TIMEOUT_MS = 60 * 60 * 1000`, so it is intentionally
+left unchanged. The patch only brings the default/background path up to the same one-hour
+ceiling.
+
+The existing `Zfo=120000` entry in the lazily loaded SDK budget block is a separate
+timeout constant and does not replace either of the two 30-second `run_commands`
+deadlines above.
+
+## 6. Deliberately not changed
 
 | Item | Why |
 |---|---|
@@ -92,7 +112,7 @@ after:   Suo=5e5,   Zfo=12e4,Wad=2e6,   OKe=2e5,   qad=2e4, Gad=2e3,Had=100,zad=
 | 200-character command preview in the chat UI | display-only, lives in the webview bundle, does not affect executed output |
 | model catalog `contextWindow` / `maxTokens` entries | not truncation limits; raise them per-provider in Cline's own settings UI (custom-model overrides) instead |
 
-## 6. Reproducing this map
+## 7. Reproducing this map
 
 ```powershell
 $f = "$env:USERPROFILE\.vscode\extensions\saoudrizwan.claude-dev-4.1.21\dist\extension.js"
@@ -101,5 +121,5 @@ $t = [IO.File]::ReadAllText($f)
 (Get-FileHash $f -Algorithm SHA256).Hash.ToLower()                  # -> 0035a632…e2121
 ```
 
-The patch script performs the same uniqueness check for all twelve edits and aborts if any
+The patch script performs the same uniqueness check for every recorded edit and aborts if any
 anchor is missing or ambiguous.

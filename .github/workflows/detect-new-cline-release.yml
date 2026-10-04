@@ -6,6 +6,10 @@ name: detect-new-cline-release
 # prerelease and an issue is opened for manual mapping.
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "anchors/locators.json"
   schedule:
     - cron: "17 5 * * *"
   workflow_dispatch:
@@ -69,8 +73,13 @@ jobs:
           set -euo pipefail
           version="${{ steps.resolve.outputs.version }}"
           if node -e "const a=require('./anchors/anchors.json');process.exit(a.versions['$version']?0:1)"; then
-            echo "already=$version" >> "$GITHUB_OUTPUT"
-            echo "::notice title=no-op::$version is already present in anchors/anchors.json"
+            if [ "${{ github.event_name }}" = "push" ]; then
+              echo "refresh=$version" >> "$GITHUB_OUTPUT"
+              echo "::notice title=refresh::re-detecting existing Cline $version because locator rules changed"
+            else
+              echo "already=$version" >> "$GITHUB_OUTPUT"
+              echo "::notice title=no-op::$version is already present in anchors/anchors.json"
+            fi
           fi
 
       - name: Download upstream VSIX
@@ -129,6 +138,12 @@ jobs:
             echo "status=REVIEW" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Guard existing-version refresh
+        if: steps.known.outputs.refresh != '' && steps.detect.outputs.status != 'AUTO'
+        run: |
+          echo "::error::Existing supported version failed re-detection; refusing to overwrite its recorded anchors."
+          exit 1
+
       - name: Render supported-versions docs
         if: steps.known.outputs.already == '' && inputs.dry_run != true
         run: node tools/cline-limits-tool.mjs render-docs
@@ -160,7 +175,7 @@ jobs:
 
       - name: Assemble release assets
         id: assets
-        if: steps.known.outputs.already == '' && inputs.dry_run != true
+        if: steps.known.outputs.already == '' && steps.known.outputs.refresh == '' && inputs.dry_run != true
         run: |
           set -euo pipefail
           version="${{ steps.resolve.outputs.version }}"
@@ -178,7 +193,7 @@ jobs:
           ls -l release-assets
 
       - name: Publish latest release (fully detected)
-        if: steps.detect.outputs.status == 'AUTO' && inputs.dry_run != true
+        if: steps.detect.outputs.status == 'AUTO' && steps.known.outputs.refresh == '' && inputs.dry_run != true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -191,7 +206,7 @@ jobs:
             release-assets/*
 
       - name: Publish prerelease (review required)
-        if: steps.detect.outputs.status == 'REVIEW' && inputs.dry_run != true
+        if: steps.detect.outputs.status == 'REVIEW' && steps.known.outputs.refresh == '' && inputs.dry_run != true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -204,7 +219,7 @@ jobs:
             release-assets/*
 
       - name: Open issue for manual mapping
-        if: steps.detect.outputs.status == 'REVIEW' && inputs.dry_run != true
+        if: steps.detect.outputs.status == 'REVIEW' && steps.known.outputs.refresh == '' && inputs.dry_run != true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
