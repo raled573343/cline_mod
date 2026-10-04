@@ -80,12 +80,32 @@ be turned off upstream via `CLINE_MESSAGE_BUILDER_MIN_OUTDATED_REWRITE_BYTES=dis
 `jet=2e3` (per-item minimum), `r5p=6e6` (total text bytes), `Zfo=12e4` (exec timeout, not a
 content limit).
 
-## 5. Date of patch
+## 5. Current automated refresh — Cline 4.1.22
+
+The latest supported build was re-derived on 2026-10-04 from the official `v4.1.22`
+VSIX after adding the two command-timeout locator rules.
+
+- locator result: **17/17 AUTO**
+- exact edits: **23**
+- clean bundle SHA-256: `369bfc6bd01de72d26013ed6ebac2c7c9cb5a564bb8ff14679d6a1ba2ab76178`
+- patched bundle SHA-256: `8e6c5ededaec988a89783af4f3c2030f7f0cb3ffbd6563b8511cca68f58c14a2`
+- apply check: **PASS**
+- syntax check: **PASS**
+- added timeout edits:
+  - `bashTimeoutMs??3e4` -> `bashTimeoutMs??3600000`
+  - `timeoutMs:r=3e4,env:i={},combineOutput:a=!0` ->
+    `timeoutMs:r=3600000,env:i={},combineOutput:a=!0`
+
+These two edits are intentionally paired: the outer shell-tool deadline and the inner
+background child-process executor both default to 30 seconds. Raising only one would leave
+the other as the effective failure point.
+
+## 6. Date of patch
 
 Patch authored and first applied on the reference machine on 2026-09-27 (see repository
 commit history and `patch-manifest.json` timestamps for the exact run).
 
-## 6. Environment note
+## 7. Environment note
 
 The patch was prepared on Windows 10/11 with Windows PowerShell 5.1 and Node.js v22 for
 syntax validation. VS Code 1.139.1; extension engine requirement `^1.101.0`.

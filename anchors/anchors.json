@@ -19,7 +19,9 @@
     "sdk_long_line_guard": 20000,
     "sdk_glob_results": 2000,
     "sdk_traversal_depth": 100,
-    "sdk_traversal_budget": 200000
+    "sdk_traversal_budget": 200000,
+    "bash_tool_timeout": 3600000,
+    "background_shell_timeout": 3600000
   },
   "versions": {
     "4.1.21": {

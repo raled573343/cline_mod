@@ -489,6 +489,19 @@ function cmdNotes(args, repoRoot) {
 		"",
 	];
 
+	const commandTimeoutPatched = ["bash_tool_timeout", "background_shell_timeout"].every((key) =>
+		rules.some((rule) => rule.key === key && rule.status === "AUTO"),
+	);
+	if (commandTimeoutPatched) {
+		lines.push(
+			"## Command execution timeout",
+			"",
+			"- background/default `run_commands`: **30 seconds -> 1 hour** at both the shell-tool wrapper and child-process executor layers",
+			"- VS Code foreground terminal already uses a 1-hour timeout upstream and is left unchanged",
+			"",
+		);
+	}
+
 	if (review.length > 0) {
 		lines.push(
 			`## Unresolved rules (${review.length})`,

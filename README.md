@@ -43,8 +43,8 @@ new Cline releases are picked up automatically (see [docs/automation.md](docs/au
 |---|---|---|
 | `4.1.22` | `369bfc6bd01de72d26013ed6ebac2c7c9cb5a564bb8ff14679d6a1ba2ab76178` | **AUTO** — 17/17 locator rules, 23 edits, `node --check` PASS |
 
-The patcher takes its edit table from [`anchors/anchors.json`](anchors/anchors.json) for the
-installed version (falling back to a built-in 4.1.21 table). It refuses to touch any anchor
+The repository patcher carries an embedded catalog generated from [`anchors/anchors.json`](anchors/anchors.json)
+for supported versions, while each release asset is rendered as a self-contained one-version patcher. It refuses to touch any anchor
 that is not found exactly once, so an unexpected build fails closed instead of corrupting the
 bundle.
 

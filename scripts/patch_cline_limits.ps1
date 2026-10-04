@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Self-contained unofficial patcher for Cline VS Code truncation limits.
+    Self-contained unofficial patcher for Cline VS Code limits and background command timeout.
 
 .DESCRIPTION
     Normal usage needs exactly this one file. With no switches the script:
@@ -44,58 +44,206 @@ $script:EmbeddedAnchorsJson = @'
   "versions": {
     "4.1.21": {
       "status": "AUTO",
+      "method": "detected",
+      "upstreamTag": null,
+      "detectedAt": "2026-09-27T13:58:05.821Z",
+      "bundleBytesBefore": 26360724,
       "bundleSha256Before": "0035a6327275fd3f750ae7cbabf944f2d31f6f36f53a37a808eff7b0421e2121",
+      "bundleBytesAfter": 26360764,
       "bundleSha256After": "db84361b262e38720ca488377aaedf60ecbaaa83db03b62136f9c556e1ca3316",
+      "applyCheck": "PASS",
+      "syntaxCheck": "PASS",
       "edits": [
-        {"old":"maxChars??48e3","new":"maxChars??200000"},
-        {"old":"WQt=48e3","new":"WQt=200000"},
-        {"old":"nXo=48e3","new":"nXo=200000"},
-        {"old":"QQt=2e3","new":"QQt=20000"},
-        {"old":"jCn=2e3","new":"jCn=20000"},
-        {"old":",e=409600){if(t.length<=e)return t","new":",e=4000000){if(t.length<=e)return t"},
-        {"old":"slice(0,5e4)","new":"slice(0,200000)"},
-        {"old":"A.length>5e4&&","new":"A.length>200000&&"},
-        {"old":"showing first 50000 of","new":"showing first 200000 of"},
-        {"old":"E0e=6e3","new":"E0e=100000"},
-        {"old":"e5p=8e3","new":"e5p=300000"},
-        {"old":"t5p=5e4","new":"t5p=200000"},
-        {"old":"n5p=2e5","new":"n5p=400000"},
-        {"old":"i5p=12e3","new":"i5p=100000"},
-        {"old":"Suo=102400,","new":"Suo=500000,"},
-        {"old":"Wad=262144,","new":"Wad=2000000,"},
-        {"old":"OKe=102400,","new":"OKe=200000,"},
-        {"old":"qad=2e3,","new":"qad=20000,"},
-        {"old":"Gad=200,","new":"Gad=2000,"},
-        {"old":"Had=40,","new":"Had=100,"},
-        {"old":"zad=5e4","new":"zad=200000"}
+        {
+          "old": "maxChars??48e3",
+          "new": "maxChars??200000"
+        },
+        {
+          "old": "WQt=48e3",
+          "new": "WQt=200000"
+        },
+        {
+          "old": "nXo=48e3",
+          "new": "nXo=200000"
+        },
+        {
+          "old": "QQt=2e3",
+          "new": "QQt=20000"
+        },
+        {
+          "old": "jCn=2e3",
+          "new": "jCn=20000"
+        },
+        {
+          "old": ",e=409600){if(t.length<=e)return t",
+          "new": ",e=4000000){if(t.length<=e)return t"
+        },
+        {
+          "old": "slice(0,5e4)",
+          "new": "slice(0,200000)"
+        },
+        {
+          "old": "A.length>5e4&&",
+          "new": "A.length>200000&&"
+        },
+        {
+          "old": "showing first 50000 of",
+          "new": "showing first 200000 of"
+        },
+        {
+          "old": "E0e=6e3",
+          "new": "E0e=100000"
+        },
+        {
+          "old": "e5p=8e3",
+          "new": "e5p=300000"
+        },
+        {
+          "old": "t5p=5e4",
+          "new": "t5p=200000"
+        },
+        {
+          "old": "n5p=2e5",
+          "new": "n5p=400000"
+        },
+        {
+          "old": "i5p=12e3",
+          "new": "i5p=100000"
+        },
+        {
+          "old": "Suo=102400,",
+          "new": "Suo=500000,"
+        },
+        {
+          "old": "Wad=262144,",
+          "new": "Wad=2000000,"
+        },
+        {
+          "old": "OKe=102400,",
+          "new": "OKe=200000,"
+        },
+        {
+          "old": "qad=2e3,",
+          "new": "qad=20000,"
+        },
+        {
+          "old": "Gad=200,",
+          "new": "Gad=2000,"
+        },
+        {
+          "old": "Had=40,",
+          "new": "Had=100,"
+        },
+        {
+          "old": "zad=5e4",
+          "new": "zad=200000"
+        }
       ]
     },
     "4.1.22": {
       "status": "AUTO",
+      "method": "detected",
+      "upstreamTag": "v4.1.22",
+      "detectedAt": "2026-10-04T03:43:23.627Z",
+      "bundleBytesBefore": 25719093,
       "bundleSha256Before": "369bfc6bd01de72d26013ed6ebac2c7c9cb5a564bb8ff14679d6a1ba2ab76178",
-      "bundleSha256After": "804f1902e95904934e64f9b43386aac8fc4c080d391ac36eee6a7a95b02f873e",
+      "bundleBytesAfter": 25719141,
+      "bundleSha256After": "8e6c5ededaec988a89783af4f3c2030f7f0cb3ffbd6563b8511cca68f58c14a2",
+      "applyCheck": "PASS",
+      "syntaxCheck": "PASS",
       "edits": [
-        {"old":"maxChars??48e3","new":"maxChars??200000"},
-        {"old":"sNt=48e3","new":"sNt=200000"},
-        {"old":"u5o=48e3","new":"u5o=200000"},
-        {"old":"oNt=2e3","new":"oNt=20000"},
-        {"old":"uhn=2e3","new":"uhn=20000"},
-        {"old":",e=409600){if(t.length<=e)return t","new":",e=4000000){if(t.length<=e)return t"},
-        {"old":"slice(0,5e4)","new":"slice(0,200000)"},
-        {"old":"A.length>5e4&&","new":"A.length>200000&&"},
-        {"old":"showing first 50000 of","new":"showing first 200000 of"},
-        {"old":"Hhe=6e3","new":"Hhe=100000"},
-        {"old":"fAp=8e3","new":"fAp=300000"},
-        {"old":"hAp=5e4","new":"hAp=200000"},
-        {"old":"gAp=2e5","new":"gAp=400000"},
-        {"old":"AAp=12e3","new":"AAp=100000"},
-        {"old":"tVa=102400,","new":"tVa=500000,"},
-        {"old":"YUc=262144,","new":"YUc=2000000,"},
-        {"old":"lVe=102400,","new":"lVe=200000,"},
-        {"old":"XUc=2e3,","new":"XUc=20000,"},
-        {"old":"ZUc=200,","new":"ZUc=2000,"},
-        {"old":"eWc=40,","new":"eWc=100,"},
-        {"old":"tWc=5e4","new":"tWc=200000"}
+        {
+          "old": "maxChars??48e3",
+          "new": "maxChars??200000"
+        },
+        {
+          "old": "sNt=48e3",
+          "new": "sNt=200000"
+        },
+        {
+          "old": "u5o=48e3",
+          "new": "u5o=200000"
+        },
+        {
+          "old": "oNt=2e3",
+          "new": "oNt=20000"
+        },
+        {
+          "old": "uhn=2e3",
+          "new": "uhn=20000"
+        },
+        {
+          "old": ",e=409600){if(t.length<=e)return t",
+          "new": ",e=4000000){if(t.length<=e)return t"
+        },
+        {
+          "old": "slice(0,5e4)",
+          "new": "slice(0,200000)"
+        },
+        {
+          "old": "A.length>5e4&&",
+          "new": "A.length>200000&&"
+        },
+        {
+          "old": "showing first 50000 of",
+          "new": "showing first 200000 of"
+        },
+        {
+          "old": "Hhe=6e3",
+          "new": "Hhe=100000"
+        },
+        {
+          "old": "fAp=8e3",
+          "new": "fAp=300000"
+        },
+        {
+          "old": "hAp=5e4",
+          "new": "hAp=200000"
+        },
+        {
+          "old": "gAp=2e5",
+          "new": "gAp=400000"
+        },
+        {
+          "old": "AAp=12e3",
+          "new": "AAp=100000"
+        },
+        {
+          "old": "bashTimeoutMs??3e4",
+          "new": "bashTimeoutMs??3600000"
+        },
+        {
+          "old": "timeoutMs:r=3e4,env:i={},combineOutput:a=!0",
+          "new": "timeoutMs:r=3600000,env:i={},combineOutput:a=!0"
+        },
+        {
+          "old": "tVa=102400,",
+          "new": "tVa=500000,"
+        },
+        {
+          "old": "YUc=262144,",
+          "new": "YUc=2000000,"
+        },
+        {
+          "old": "lVe=102400,",
+          "new": "lVe=200000,"
+        },
+        {
+          "old": "XUc=2e3,",
+          "new": "XUc=20000,"
+        },
+        {
+          "old": "ZUc=200,",
+          "new": "ZUc=2000,"
+        },
+        {
+          "old": "eWc=40,",
+          "new": "eWc=100,"
+        },
+        {
+          "old": "tWc=5e4",
+          "new": "tWc=200000"
+        }
       ]
     }
   }
