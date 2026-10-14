@@ -1,0 +1,417 @@
+{
+  "version": "4.1.24",
+  "upstreamTag": "v4.1.24",
+  "detectedAt": "2026-10-14T10:11:12.332Z",
+  "status": "AUTO",
+  "ruleCount": 20,
+  "autoCount": 20,
+  "bundleBytesBefore": 27507118,
+  "bundleSha256Before": "45a2ba59a0d3311b52d11d813aba1ec42cca2413dd897c2ea81a61c3f04b5a0f",
+  "bundleBytesAfter": 27507166,
+  "bundleSha256After": "33117e2139a333845b0524edf034d19630a6289858b3314f00186e136c904e16",
+  "applyCheck": "PASS",
+  "syntaxCheck": "PASS",
+  "profiles": {
+    "standard": {
+      "groups": [
+        "base"
+      ],
+      "editCount": 23,
+      "bundleBytesAfter": 27507166,
+      "bundleSha256After": "33117e2139a333845b0524edf034d19630a6289858b3314f00186e136c904e16",
+      "applyCheck": "PASS",
+      "syntaxCheck": "PASS"
+    },
+    "safety-unlock": {
+      "groups": [
+        "base",
+        "safety-unlock"
+      ],
+      "editCount": 26,
+      "bundleBytesAfter": 27507184,
+      "bundleSha256After": "d8a35616e65644359f640e35324953dce32e72942ab978850417203555a9deac",
+      "applyCheck": "PASS",
+      "syntaxCheck": "PASS"
+    }
+  },
+  "rules": [
+    {
+      "key": "run_commands_output",
+      "area": "run_commands output budget",
+      "kind": "literal",
+      "group": "base",
+      "optional": false,
+      "target": 200000,
+      "status": "AUTO",
+      "reason": "literal 48e3 -> 200000",
+      "evidence": "maxChars??48e3"
+    },
+    {
+      "key": "search_output",
+      "area": "search_codebase output budget",
+      "kind": "symbol-decl",
+      "group": "base",
+      "optional": false,
+      "target": 200000,
+      "status": "AUTO",
+      "reason": "SNt: 48e3 -> 200000",
+      "evidence": "SNt=48e3"
+    },
+    {
+      "key": "read_output_chars",
+      "area": "read_files output budget",
+      "kind": "symbol-decl",
+      "group": "base",
+      "optional": false,
+      "target": 200000,
+      "status": "AUTO",
+      "reason": "tPo: 48e3 -> 200000",
+      "evidence": "tPo=48e3"
+    },
+    {
+      "key": "read_max_lines",
+      "area": "read_files max lines",
+      "kind": "symbol-decl",
+      "group": "base",
+      "optional": false,
+      "target": 20000,
+      "status": "AUTO",
+      "reason": "_Nt: 2e3 -> 20000",
+      "evidence": "_Nt=2e3"
+    },
+    {
+      "key": "read_line_chars",
+      "area": "read_files per-line chars",
+      "kind": "symbol-decl",
+      "group": "base",
+      "optional": false,
+      "target": 20000,
+      "status": "AUTO",
+      "reason": "Lhn: 2e3 -> 20000",
+      "evidence": "Lhn=2e3"
+    },
+    {
+      "key": "attached_file_content",
+      "area": "attached file content limit",
+      "kind": "literal",
+      "group": "base",
+      "optional": false,
+      "target": 4000000,
+      "status": "AUTO",
+      "reason": "literal 409600 -> 4000000",
+      "evidence": ",e=409600){if(t.length<=e)return t"
+    },
+    {
+      "key": "web_fetch_content_slice",
+      "area": "web fetch content slice",
+      "kind": "literal",
+      "group": "base",
+      "optional": false,
+      "target": 200000,
+      "status": "AUTO",
+      "reason": "literal 5e4 -> 200000",
+      "evidence": "slice(0,5e4)"
+    },
+    {
+      "key": "web_fetch_content_check",
+      "area": "web fetch length check",
+      "kind": "literal",
+      "group": "base",
+      "optional": false,
+      "target": 200000,
+      "status": "AUTO",
+      "reason": "literal 5e4 -> 200000",
+      "evidence": "v.length>5e4&&"
+    },
+    {
+      "key": "web_fetch_notice_text",
+      "area": "web fetch notice text",
+      "kind": "literal",
+      "group": "base",
+      "optional": false,
+      "target": 200000,
+      "status": "AUTO",
+      "reason": "literal 50000 -> 200000",
+      "evidence": "showing first 50000 of"
+    },
+    {
+      "key": "editor_input_guard",
+      "area": "editor payload guard",
+      "kind": "symbol-decl",
+      "group": "base",
+      "optional": false,
+      "target": 100000,
+      "status": "AUTO",
+      "reason": "Fhe: 6e3 -> 100000",
+      "evidence": "Fhe=6e3"
+    },
+    {
+      "key": "message_builder_tool_result",
+      "area": "message builder: tool-result forwarding cap",
+      "kind": "symbol-decl",
+      "group": "base",
+      "optional": false,
+      "target": 300000,
+      "status": "AUTO",
+      "reason": "OPo: 8e3 -> 300000",
+      "evidence": "OPo=8e3"
+    },
+    {
+      "key": "message_builder_file_content",
+      "area": "message builder: file content cap",
+      "kind": "symbol-decl",
+      "group": "base",
+      "optional": false,
+      "target": 200000,
+      "status": "AUTO",
+      "reason": "a1p: 5e4 -> 200000",
+      "evidence": "a1p=5e4"
+    },
+    {
+      "key": "message_builder_assistant_text",
+      "area": "message builder: assistant text cap",
+      "kind": "symbol-decl",
+      "group": "base",
+      "optional": false,
+      "target": 400000,
+      "status": "AUTO",
+      "reason": "s1p: 2e5 -> 400000",
+      "evidence": "s1p=2e5"
+    },
+    {
+      "key": "message_builder_tool_markup",
+      "area": "message builder: assistant tool-call markup cap",
+      "kind": "symbol-decl",
+      "group": "base",
+      "optional": false,
+      "target": 100000,
+      "status": "AUTO",
+      "reason": "u1p: 12e3 -> 100000",
+      "evidence": "u1p=12e3"
+    },
+    {
+      "key": "bash_tool_timeout",
+      "area": "run_commands wrapper timeout",
+      "kind": "literal",
+      "group": "base",
+      "optional": false,
+      "target": 3600000,
+      "status": "AUTO",
+      "reason": "literal 3e4 -> 3600000",
+      "evidence": "bashTimeoutMs??3e4"
+    },
+    {
+      "key": "background_shell_timeout",
+      "area": "backgroundExec child-process timeout",
+      "kind": "literal",
+      "group": "base",
+      "optional": false,
+      "target": 3600000,
+      "status": "AUTO",
+      "reason": "literal 3e4 -> 3600000",
+      "evidence": "timeoutMs:r=3e4,env:i={},combineOutput:a=!0"
+    },
+    {
+      "key": "loop_detection_soft_threshold",
+      "area": "repeated identical tool-call soft threshold",
+      "kind": "literal",
+      "group": "safety-unlock",
+      "optional": true,
+      "target": 1000000,
+      "status": "AUTO",
+      "reason": "literal 3 -> 1000000",
+      "evidence": "softThreshold:3"
+    },
+    {
+      "key": "loop_detection_hard_threshold",
+      "area": "repeated identical tool-call hard-stop threshold",
+      "kind": "literal",
+      "group": "safety-unlock",
+      "optional": true,
+      "target": 1000000,
+      "status": "AUTO",
+      "reason": "literal 5 -> 1000000",
+      "evidence": "hardThreshold:5"
+    },
+    {
+      "key": "max_consecutive_mistakes",
+      "area": "consecutive mistake hard-stop threshold",
+      "kind": "literal",
+      "group": "safety-unlock",
+      "optional": true,
+      "target": 1000000,
+      "status": "AUTO",
+      "reason": "literal 6 -> 1000000",
+      "evidence": "maxConsecutiveMistakes??6"
+    },
+    {
+      "key": "sdk_tool_budgets",
+      "area": "sdk tool budgets (shell tail buffer, grep budget, read bytes, line guard, glob, traversal)",
+      "kind": "block-signature",
+      "group": "base",
+      "optional": false,
+      "target": null,
+      "status": "AUTO",
+      "reason": "sKa:102400->500000, sHc:262144->2000000, iVe:102400->200000, uHc:2000->20000, lHc:200->2000, cHc:40->100, dHc:50000->200000",
+      "evidence": "sKa=102400,PZa=12e4,sHc=262144,iVe=102400,uHc=2e3,lHc=200,cHc=40,dHc=5e4"
+    }
+  ],
+  "edits": [
+    {
+      "old": "maxChars??48e3",
+      "new": "maxChars??200000",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "SNt=48e3",
+      "new": "SNt=200000",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "tPo=48e3",
+      "new": "tPo=200000",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "_Nt=2e3",
+      "new": "_Nt=20000",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "Lhn=2e3",
+      "new": "Lhn=20000",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": ",e=409600){if(t.length<=e)return t",
+      "new": ",e=4000000){if(t.length<=e)return t",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "slice(0,5e4)",
+      "new": "slice(0,200000)",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "v.length>5e4&&",
+      "new": "v.length>200000&&",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "showing first 50000 of",
+      "new": "showing first 200000 of",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "Fhe=6e3",
+      "new": "Fhe=100000",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "OPo=8e3",
+      "new": "OPo=300000",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "a1p=5e4",
+      "new": "a1p=200000",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "s1p=2e5",
+      "new": "s1p=400000",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "u1p=12e3",
+      "new": "u1p=100000",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "bashTimeoutMs??3e4",
+      "new": "bashTimeoutMs??3600000",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "timeoutMs:r=3e4,env:i={},combineOutput:a=!0",
+      "new": "timeoutMs:r=3600000,env:i={},combineOutput:a=!0",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "softThreshold:3",
+      "new": "softThreshold:1000000",
+      "group": "safety-unlock",
+      "optional": true
+    },
+    {
+      "old": "hardThreshold:5",
+      "new": "hardThreshold:1000000",
+      "group": "safety-unlock",
+      "optional": true
+    },
+    {
+      "old": "maxConsecutiveMistakes??6",
+      "new": "maxConsecutiveMistakes??1000000",
+      "group": "safety-unlock",
+      "optional": true
+    },
+    {
+      "old": "sKa=102400,",
+      "new": "sKa=500000,",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "sHc=262144,",
+      "new": "sHc=2000000,",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "iVe=102400,",
+      "new": "iVe=200000,",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "uHc=2e3,",
+      "new": "uHc=20000,",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "lHc=200,",
+      "new": "lHc=2000,",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "cHc=40,",
+      "new": "cHc=100,",
+      "group": "base",
+      "optional": false
+    },
+    {
+      "old": "dHc=5e4",
+      "new": "dHc=200000",
+      "group": "base",
+      "optional": false
+    }
+  ]
+}
