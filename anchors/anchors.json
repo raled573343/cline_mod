@@ -896,7 +896,200 @@
           "optional": false
         }
       ]
+    },
+    "4.1.26": {
+      "status": "AUTO",
+      "method": "detected",
+      "upstreamTag": "v4.1.26",
+      "detectedAt": "2026-10-26T11:05:33.823Z",
+      "bundleBytesBefore": 25798083,
+      "bundleSha256Before": "ae4cec19fd74dc97681dcfcfe5a6644cae4a5f5f19396f1424dcd9eada659559",
+      "bundleBytesAfter": 25798131,
+      "bundleSha256After": "4213fad76c10a889dd2eccf492bcac9740bb0bcd82e7711c008f8f6828381240",
+      "applyCheck": "PASS",
+      "syntaxCheck": "PASS",
+      "profiles": {
+        "standard": {
+          "groups": [
+            "base"
+          ],
+          "editCount": 23,
+          "bundleBytesAfter": 25798131,
+          "bundleSha256After": "4213fad76c10a889dd2eccf492bcac9740bb0bcd82e7711c008f8f6828381240",
+          "applyCheck": "PASS",
+          "syntaxCheck": "PASS"
+        },
+        "safety-unlock": {
+          "groups": [
+            "base",
+            "safety-unlock"
+          ],
+          "editCount": 26,
+          "bundleBytesAfter": 25798149,
+          "bundleSha256After": "3429e0bf185368d4e5f2fa48ccd1d5e39e5c0a057c0d8e0b296928658b6bf378",
+          "applyCheck": "PASS",
+          "syntaxCheck": "PASS"
+        }
+      },
+      "edits": [
+        {
+          "old": "maxChars??48e3",
+          "new": "maxChars??200000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "OQt=48e3",
+          "new": "OQt=200000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "lWo=48e3",
+          "new": "lWo=200000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "MQt=2e3",
+          "new": "MQt=20000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "a2n=2e3",
+          "new": "a2n=20000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": ",e=409600){if(t.length<=e)return t",
+          "new": ",e=4000000){if(t.length<=e)return t",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "slice(0,5e4)",
+          "new": "slice(0,200000)",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "A.length>5e4&&",
+          "new": "A.length>200000&&",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "showing first 50000 of",
+          "new": "showing first 200000 of",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "Lhe=6e3",
+          "new": "Lhe=100000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "qWo=8e3",
+          "new": "qWo=300000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "B6p=5e4",
+          "new": "B6p=200000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "M6p=2e5",
+          "new": "M6p=400000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "O6p=12e3",
+          "new": "O6p=100000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "bashTimeoutMs??3e4",
+          "new": "bashTimeoutMs??3600000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "timeoutMs:r=3e4,env:i={},combineOutput:a=!0",
+          "new": "timeoutMs:r=3600000,env:i={},combineOutput:a=!0",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "softThreshold:3",
+          "new": "softThreshold:1000000",
+          "group": "safety-unlock",
+          "optional": true
+        },
+        {
+          "old": "hardThreshold:5",
+          "new": "hardThreshold:1000000",
+          "group": "safety-unlock",
+          "optional": true
+        },
+        {
+          "old": "maxConsecutiveMistakes??6",
+          "new": "maxConsecutiveMistakes??1000000",
+          "group": "safety-unlock",
+          "optional": true
+        },
+        {
+          "old": "Sio=102400,",
+          "new": "Sio=500000,",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "ynd=262144,",
+          "new": "ynd=2000000,",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "jVe=102400,",
+          "new": "jVe=200000,",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "vnd=2e3,",
+          "new": "vnd=20000,",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "bnd=200,",
+          "new": "bnd=2000,",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "xnd=40,",
+          "new": "xnd=100,",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "End=5e4",
+          "new": "End=200000",
+          "group": "base",
+          "optional": false
+        }
+      ]
     }
   },
-  "updatedAt": "2026-10-16T09:47:24.822Z"
+  "updatedAt": "2026-10-26T11:05:33.823Z"
 }
