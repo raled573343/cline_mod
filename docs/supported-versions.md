@@ -13,6 +13,7 @@ Generated from [`anchors/anchors.json`](../anchors/anchors.json). Run
 | `4.1.24` | auto-detected | AUTO | `45a2ba59a0d3311b…` | `33117e2139a33384…` | 23 | 3 | 2026-10-14T10:11:12.332Z |
 | `4.1.25` | auto-detected | AUTO | `a3e8eda18b38547d…` | `107250b417fe0c1d…` | 23 | 3 | 2026-10-16T09:47:24.822Z |
 | `4.1.26` | auto-detected | AUTO | `ae4cec19fd74dc97…` | `4213fad76c10a889…` | 23 | 3 | 2026-10-26T11:05:33.823Z |
+| `4.1.27` | auto-detected | AUTO | `443fae8703de1459…` | `742e80d6e390615b…` | 23 | 3 | 2026-11-21T13:27:15.757Z |
 
 `AUTO` means every locator rule resolved and the patched bundle passed `node --check`.
 `REVIEW` means at least one rule could not be located in that build - the published anchors
