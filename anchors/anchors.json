@@ -1282,7 +1282,200 @@
           "optional": false
         }
       ]
+    },
+    "4.1.28": {
+      "status": "AUTO",
+      "method": "detected",
+      "upstreamTag": "v4.1.28",
+      "detectedAt": "2026-11-26T15:12:04.187Z",
+      "bundleBytesBefore": 25764915,
+      "bundleSha256Before": "d0024a97349b2438ac43fc03e560d992f567e35c867b285c764aea04d270f8ae",
+      "bundleBytesAfter": 25764963,
+      "bundleSha256After": "3e48e534300651cc0181dce7bacfb3ea9c3ccb878b37bb538776dabfff8bee56",
+      "applyCheck": "PASS",
+      "syntaxCheck": "PASS",
+      "profiles": {
+        "standard": {
+          "groups": [
+            "base"
+          ],
+          "editCount": 23,
+          "bundleBytesAfter": 25764963,
+          "bundleSha256After": "3e48e534300651cc0181dce7bacfb3ea9c3ccb878b37bb538776dabfff8bee56",
+          "applyCheck": "PASS",
+          "syntaxCheck": "PASS"
+        },
+        "safety-unlock": {
+          "groups": [
+            "base",
+            "safety-unlock"
+          ],
+          "editCount": 26,
+          "bundleBytesAfter": 25764981,
+          "bundleSha256After": "88ccd5df3fd27ad91931369c098ac8d1a214bba9f343c6c7428701e50ccc8b4b",
+          "applyCheck": "PASS",
+          "syntaxCheck": "PASS"
+        }
+      },
+      "edits": [
+        {
+          "old": "maxChars??48e3",
+          "new": "maxChars??200000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "aNt=48e3",
+          "new": "aNt=200000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "r4o=48e3",
+          "new": "r4o=200000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "iNt=2e3",
+          "new": "iNt=20000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "Ihn=2e3",
+          "new": "Ihn=20000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": ",e=409600){if(t.length<=e)return t",
+          "new": ",e=4000000){if(t.length<=e)return t",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "slice(0,5e4)",
+          "new": "slice(0,200000)",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "A.length>5e4&&",
+          "new": "A.length>200000&&",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "showing first 50000 of",
+          "new": "showing first 200000 of",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "Gpe=6e3",
+          "new": "Gpe=100000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "M4o=8e3",
+          "new": "M4o=300000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "Ccp=5e4",
+          "new": "Ccp=200000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "_cp=2e5",
+          "new": "_cp=400000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "Scp=12e3",
+          "new": "Scp=100000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "bashTimeoutMs??3e4",
+          "new": "bashTimeoutMs??3600000",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "timeoutMs:r=3e4,env:i={},combineOutput:a=!0",
+          "new": "timeoutMs:r=3600000,env:i={},combineOutput:a=!0",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "softThreshold:3",
+          "new": "softThreshold:1000000",
+          "group": "safety-unlock",
+          "optional": true
+        },
+        {
+          "old": "hardThreshold:5",
+          "new": "hardThreshold:1000000",
+          "group": "safety-unlock",
+          "optional": true
+        },
+        {
+          "old": "maxConsecutiveMistakes??6",
+          "new": "maxConsecutiveMistakes??1000000",
+          "group": "safety-unlock",
+          "optional": true
+        },
+        {
+          "old": "EGa=102400,",
+          "new": "EGa=500000,",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "RFc=262144,",
+          "new": "RFc=2000000,",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "Lze=102400,",
+          "new": "Lze=200000,",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "DFc=2e3,",
+          "new": "DFc=20000,",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "BFc=200,",
+          "new": "BFc=2000,",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "OFc=40,",
+          "new": "OFc=100,",
+          "group": "base",
+          "optional": false
+        },
+        {
+          "old": "PFc=5e4",
+          "new": "PFc=200000",
+          "group": "base",
+          "optional": false
+        }
+      ]
     }
   },
-  "updatedAt": "2026-11-21T13:27:15.757Z"
+  "updatedAt": "2026-11-26T15:12:04.187Z"
 }
